@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   FileText,
+  Inbox,
 } from 'lucide-react';
 
 export function AppShell({ children }) {
@@ -45,7 +46,7 @@ export function AppShell({ children }) {
         { to: '/donor', label: 'Dashboard', icon: BarChart3, end: true },
         { to: '/donor/donations/new', label: 'Donate Items', icon: Package },
         { to: '/donor/donations', label: 'My Donations', icon: ClipboardList },
-        { to: '/donor/map', label: 'Nearby NGOs', icon: MapPin },
+        { to: '/donor/requests', label: 'Requests', icon: Inbox },
         { to: '/profile', label: 'Profile', icon: User },
       ];
     }
