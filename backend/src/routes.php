@@ -69,4 +69,12 @@ return function (Router $router): void {
 
     // Admin Donation Moderation
     $router->post('/api/admin/donations/{id}/moderate', [App\Controllers\AdminDonationController::class, 'moderate'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin'), CsrfMiddleware::class]);
+
+    // ─── NGO Requirements ─────────────────────────────────────────────────────
+    $router->post('/api/requirements', [App\Controllers\RequirementController::class, 'store'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/api/requirements', [App\Controllers\RequirementController::class, 'index'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class]);
+    $router->get('/api/requirements/{id}', [App\Controllers\RequirementController::class, 'show'], [AuthMiddleware::class]);
+    $router->patch('/api/requirements/{id}', [App\Controllers\RequirementController::class, 'update'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/api/requirements/{id}/close', [App\Controllers\RequirementController::class, 'close'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+    $router->delete('/api/requirements/{id}', [App\Controllers\RequirementController::class, 'destroy'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
 };
