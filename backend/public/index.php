@@ -10,25 +10,10 @@ if (function_exists('header_remove')) {
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Http\ErrorHandler;
+use App\Http\Request;
+use App\Http\Router;
 use App\Support\Config;
-use App\Support\Database;
-
-// Handle CORS
-$allowedOrigin = $_ENV['CORS_ALLOWED_ORIGIN'] ?? 'http://localhost:5173';
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if ($origin === $allowedOrigin || $allowedOrigin === '*') {
-    header("Access-Control-Allow-Origin: $origin");
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-}
-
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
-header('Content-Type: application/json; charset=UTF-8');
 
 // Load environment configuration
 $rootPath = dirname(__DIR__, 2);
@@ -47,58 +32,31 @@ try {
     exit;
 }
 
-$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
-
-// Basic routing for Milestone 0.3
-if ($uri === '/api/health') {
-    if ($method !== 'GET') {
-        http_response_code(405);
-        header('Allow: GET');
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'METHOD_NOT_ALLOWED',
-                'message' => 'Method not allowed. Allowed methods: GET'
-            ]
-        ], JSON_UNESCAPED_SLASHES);
-        exit;
+// Handle preflight OPTIONS request
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+    $allowedOrigin = Config::get('CORS_ALLOWED_ORIGIN', 'http://localhost:5173');
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origin === $allowedOrigin || $allowedOrigin === '*') {
+        header("Access-Control-Allow-Origin: $origin");
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token, X-Request-ID');
     }
-
-    try {
-        $pdo = Database::getConnection();
-        $stmt = $pdo->query('SELECT 1');
-        $dbOk = $stmt !== false;
-
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'status' => 'ok',
-                'db' => $dbOk,
-                'time' => gmdate('Y-m-d\TH:i:s\Z')
-            ]
-        ], JSON_UNESCAPED_SLASHES);
-    } catch (\Throwable $e) {
-        error_log('Database health check failed: ' . $e->getMessage());
-        http_response_code(503);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'SERVICE_UNAVAILABLE',
-                'message' => 'Database connection unavailable'
-            ]
-        ], JSON_UNESCAPED_SLASHES);
-    }
+    http_response_code(204);
     exit;
 }
 
-// 404 for unknown endpoints
-http_response_code(404);
-echo json_encode([
-    'success' => false,
-    'error' => [
-        'code' => 'NOT_FOUND',
-        'message' => 'Route not found: ' . $uri
-    ]
-], JSON_UNESCAPED_SLASHES);
+$request = null;
+try {
+    $request = Request::fromGlobals();
+
+    $router = new Router();
+    $registerRoutes = require __DIR__ . '/../src/routes.php';
+    $registerRoutes($router);
+
+    $response = $router->dispatch($request);
+    $response->send();
+} catch (\Throwable $e) {
+    $response = ErrorHandler::handle($e, $request);
+    $response->send();
+}
