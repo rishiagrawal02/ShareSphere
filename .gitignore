@@ -1,0 +1,57 @@
+# ─── Environment & Secrets ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Backend ──────────────────────────────────────────────────────────────────
+backend/vendor/
+backend/storage/*
+!backend/storage/.gitkeep
+backend/.phpunit.cache/
+.phpunit.cache/
+
+# ─── Frontend ─────────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# ─── Test Artifacts ───────────────────────────────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+/e2e/videos/
+/e2e/screenshots/
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+backend/storage/logs/
+
+# ─── Security / Certificates ──────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+
+# ─── Database Dumps ───────────────────────────────────────────────────────────
+*.sql.gz
+*.dump
+
+# ─── IDE & Editor ─────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── k6 / Perf Output ─────────────────────────────────────────────────────────
+tests/load/results/
+*.k6.json
+
+# ─── Composer / PHP ───────────────────────────────────────────────────────────
+composer.phar
