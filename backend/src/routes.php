@@ -85,4 +85,12 @@ return function (Router $router): void {
     // GET /api/map/donations?requirement_id= OR ?bbox=minLng,minLat,maxLng,maxLat
     // Returns GeoJSON-like markers (snapped public coords only, max 200)
     $router->get('/api/map/donations', [App\Controllers\MapController::class, 'donations'], [AuthMiddleware::class]);
+
+    // ─── Donation Requests & Allocations (Phase 9) ─────────────────────────────
+    $router->post('/api/requests', [App\Controllers\RequestController::class, 'store'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/api/requests', [App\Controllers\RequestController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/api/requests/{id}', [App\Controllers\RequestController::class, 'show'], [AuthMiddleware::class]);
+    $router->post('/api/requests/{id}/accept', [App\Controllers\RequestController::class, 'accept'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+    $router->post('/api/requests/{id}/reject', [App\Controllers\RequestController::class, 'reject'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+    $router->post('/api/requests/{id}/cancel', [App\Controllers\RequestController::class, 'cancel'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
 };
