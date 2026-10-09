@@ -22,3 +22,4 @@ npm run build
 cd ..
 
 echo "=== ALL VERIFICATION CHECKS PASSED (Phase 0 Baseline) ==="
+conti

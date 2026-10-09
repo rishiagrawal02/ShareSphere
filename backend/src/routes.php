@@ -93,4 +93,16 @@ return function (Router $router): void {
     $router->post('/api/requests/{id}/accept', [App\Controllers\RequestController::class, 'accept'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
     $router->post('/api/requests/{id}/reject', [App\Controllers\RequestController::class, 'reject'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
     $router->post('/api/requests/{id}/cancel', [App\Controllers\RequestController::class, 'cancel'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+
+    // ─── Pickup, OTP & Handover Completion (Phase 10) ──────────────────────────
+    $router->post('/api/pickups', [App\Controllers\PickupController::class, 'store'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/api/pickups', [App\Controllers\PickupController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/api/pickups/{id}', [App\Controllers\PickupController::class, 'show'], [AuthMiddleware::class]);
+    $router->post('/api/pickups/{id}/confirm', [App\Controllers\PickupController::class, 'confirm'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->patch('/api/pickups/{id}', [App\Controllers\PickupController::class, 'reschedule'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/api/pickups/{id}/cancel', [App\Controllers\PickupController::class, 'cancel'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/api/pickups/{id}/otp', [App\Controllers\PickupController::class, 'issueOtp'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/api/pickups/{id}/verify-otp', [App\Controllers\PickupController::class, 'verifyOtp'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+    $router->post('/api/pickups/{id}/confirm-receipt', [App\Controllers\PickupController::class, 'confirmReceipt'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/api/donations/{id}/history', [App\Controllers\PickupController::class, 'donationHistory'], [AuthMiddleware::class]);
 };
