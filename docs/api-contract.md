@@ -1,6 +1,7 @@
 # ShareSphere – API Contract Specification
 
-**Version:** 1.0  
+**Version:** 1.0.0-FROZEN (Backend Feature Complete – Phase 11)  
+**Status:** **FROZEN** (Any future contract modifications require explicit versioning notes)  
 **Base URL:** `/api`  
 **Protocol:** HTTP/1.1 or HTTP/2 over TLS (Production), HTTP/1.1 (Development)  
 **Content-Type:** `application/json; charset=UTF-8`
@@ -335,13 +336,19 @@ Every API response adheres to a strict JSON envelope structure.
 
 ---
 
-### 2.12 Admin Operations
+### 2.12 Admin Operations & Dashboards
 - `GET /api/admin/ngos` (Filter: `status=pending|verified|...`)
 - `GET /api/admin/ngos/{id}`
 - `POST /api/admin/ngos/{id}/verify` (`{"action":"verify"|"reject"|"request_correction","note":"..."}`)
-- `GET /api/admin/users`
-- `PATCH /api/admin/users/{id}/status` (`{"status":"active"|"suspended","reason":"..."}`)
+- `GET /api/admin/users?role=&status=&q=&page=&limit=`
+- `GET /api/admin/users/{id}`
+- `PATCH /api/admin/users/{id}/status` (`{"status":"active"|"suspended","reason":"...","cascade":false}`)
 - `GET/POST/PATCH /api/admin/categories`
+- `PUT /api/admin/categories/{id}/compatibility`
 - `POST /api/admin/donations/{id}/moderate` (`{"action":"remove","reason":"..."}`)
-- `GET /api/admin/reports/summary`
-- `GET /api/admin/audit-logs`
+- `GET /api/admin/reports/summary?from=&to=&format=json|csv`
+- `GET /api/admin/reports/trends?metric=donations|completions&interval=day|week|month&from=&to=`
+- `GET /api/admin/reports/categories`
+- `GET /api/admin/audit-logs?actor_id=&action=&target_type=&from=&to=&page=&limit=&format=json|csv`
+- `GET /api/dashboard` (Role-scoped cards for `donor`, `ngo`, `admin`)
+
