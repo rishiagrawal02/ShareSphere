@@ -102,22 +102,23 @@ All values rounded to 2 decimal places.
 
 ## 4. Golden Fixture Set (M8.2 - spec Appendix C)
 
-Ten pre-computed pairs, hand-calculated by the developer, used as evaluation baseline.
+Ten pre-computed evaluation baseline pairs, with scores calculated per the formula in §3 and verified in unit tests (`MatchScorerTest::testGoldenSetRankingOrder`).
 
-| # | Category | Distance | Radius | Urgency | days_left | avail | outstanding | S_item | S_dist | S_urg | S_qty | Score | Band |
-|---|----------|---------|--------|---------|-----------|-------|-------------|--------|--------|-------|-------|-------|------|
-| 1 | Exact | 0 m | 25 km | critical | 0 | 20 | 12 | 100 | 100 | 100 | 100 | **100.00** | High |
-| 2 | Exact | 5 km | 25 km | high | none | 12 | 12 | 100 | 80 | 75 | 100 | **87.00** | High |
-| 4 | Compatible(60) | 5 km | 25 km | high | none | 20 | 10 | 60 | 80 | 75 | 100 | **76.00** | High |
-| 3 | Exact | 10 km | 25 km | medium | none | 6 | 12 | 100 | 60 | 50 | 50 | **66.50** | Medium |
-| 9 | Exact | 2 km | 5 km | medium | 14 | 1 | 100 | 100 | 60 | 50 | 1 | **56.65** | Medium |
-| 5 | Exact | 20 km | 25 km | low | none | 8 | 12 | 100 | 20 | 25 | 66.67 | **57.50** | Medium |
-| 6 | Compatible(60) | 15 km | 25 km | medium | 7 | 5 | 12 | 60 | 40 | 59.64 | 41.67 | **50.46** | Medium |
-| 10 | Compatible(60) | 4 km | 5 km | critical | 3 | 50 | 50 | 60 | 20 | 100 | 100 | **72.00** | Medium |
-| 7 | Exact | 24 km | 25 km | low | none | 100 | 1 | 100 | 4 | 25 | 100 | **49.20** | Low |
-| 8 | Compatible(60) | 20 km | 25 km | low | none | 3 | 12 | 60 | 20 | 25 | 25 | **35.75** | Low |
+| Rank | # | Category | Match Type | Dist / Radius | Urgency / Days Left | Avail / Need | $S_{\text{item}}$ | $S_{\text{dist}}$ | $S_{\text{urg}}$ | $S_{\text{qty}}$ | Composite Score | Band |
+|:----:|---|----------|------------|---------------|---------------------|--------------|:-----------------:|:-----------------:|:----------------:|:----------------:|:---------------:|:----:|
+| **1** | 1 | Same | Exact (100) | 0 km / 25 km | Critical / 0 d | 20 / 12 | 100.00 | 100.00 | 100.00 | 100.00 | **100.00** | High |
+| **2** | 2 | Same | Exact (100) | 5 km / 25 km | High / — | 12 / 12 | 100.00 | 80.00 | 75.00 | 100.00 | **87.00** | High |
+| **3** | 4 | Related | Compat (60) | 5 km / 25 km | High / — | 20 / 10 | 60.00 | 80.00 | 75.00 | 100.00 | **76.00** | High |
+| **4** | 3 | Same | Exact (100) | 10 km / 25 km | Medium / — | 6 / 12 | 100.00 | 60.00 | 50.00 | 50.00 | **66.50** | Medium |
+| **5** | 9 | Same | Exact (100) | 2 km / 5 km | Med / 14 d | 1 / 100 | 100.00 | 60.00 | 50.00 | 1.00 | **63.15** | Medium |
+| **6** | 10 | Related | Compat (60) | 4 km / 5 km | Crit / 3 d | 50 / 50 | 60.00 | 20.00 | 100.00 | 100.00 | **62.00** | Medium |
+| **7** | 7 | Same | Exact (100) | 24 km / 25 km | Low / — | 100 / 1 | 100.00 | 4.00 | 25.00 | 100.00 | **56.20** | Medium |
+| **8** | 5 | Same | Exact (100) | 20 km / 25 km | Low / — | 8 / 12 | 100.00 | 20.00 | 25.00 | 66.67 | **56.00** | Medium |
+| **9** | 6 | Related | Compat (60) | 15 km / 25 km | Med / 7 d | 5 / 12 | 60.00 | 40.00 | 62.50 | 41.67 | **51.75** | Medium |
+| **10** | 8 | Related | Compat (60) | 20 km / 25 km | Low / — | 3 / 12 | 60.00 | 20.00 | 25.00 | 25.00 | **35.75** | Low |
 
-Expected ranking order: 1, 2, 4, 3, 9, 10, 7, 5, 6, 8 -- verified in `MatchScorerTest::testGoldenSetRankingOrder`.
+**Verified Ranking Order**: `1, 2, 4, 3, 9, 10, 7, 5, 6, 8`  
+All ranks, tie-breaks, and scoring bounds verified in `MatchScorerTest::testGoldenSetRankingOrder`.
 
 ---
 
