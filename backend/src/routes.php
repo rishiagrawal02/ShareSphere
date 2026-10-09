@@ -57,4 +57,16 @@ return function (Router $router): void {
     $router->get('/api/admin/ngos', [App\Controllers\AdminNgoController::class, 'index'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
     $router->get('/api/admin/ngos/{id}', [App\Controllers\AdminNgoController::class, 'show'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
     $router->post('/api/admin/ngos/{id}/verify', [App\Controllers\AdminNgoController::class, 'verify'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin'), CsrfMiddleware::class]);
+
+    // ─── Donations ────────────────────────────────────────────────────────────
+    $router->post('/api/donations', [App\Controllers\DonationController::class, 'store'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+    $router->get('/api/donations', [App\Controllers\DonationController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/api/donations/{id}', [App\Controllers\DonationController::class, 'show'], [AuthMiddleware::class]);
+    $router->patch('/api/donations/{id}', [App\Controllers\DonationController::class, 'update'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+    $router->delete('/api/donations/{id}', [App\Controllers\DonationController::class, 'destroy'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+    $router->post('/api/donations/{id}/images', [App\Controllers\DonationController::class, 'uploadImages'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+    $router->delete('/api/donations/{id}/images/{imageId}', [App\Controllers\DonationController::class, 'deleteImage'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
+
+    // Admin Donation Moderation
+    $router->post('/api/admin/donations/{id}/moderate', [App\Controllers\AdminDonationController::class, 'moderate'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin'), CsrfMiddleware::class]);
 };

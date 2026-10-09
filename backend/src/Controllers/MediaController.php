@@ -26,8 +26,9 @@ class MediaController
         $userRole = $request->getAttribute('auth_role');
 
         $policy = match ($kind) {
-            'ngo-documents' => new MediaPolicyNgoDocument(),
-            default         => null,
+            'ngo-documents'   => new MediaPolicyNgoDocument(),
+            'donation-images' => new \App\Support\MediaPolicyDonationImage(),
+            default           => null,
         };
 
         if ($policy === null) {
