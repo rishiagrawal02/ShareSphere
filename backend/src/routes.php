@@ -77,4 +77,12 @@ return function (Router $router): void {
     $router->patch('/api/requirements/{id}', [App\Controllers\RequirementController::class, 'update'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
     $router->post('/api/requirements/{id}/close', [App\Controllers\RequirementController::class, 'close'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
     $router->delete('/api/requirements/{id}', [App\Controllers\RequirementController::class, 'destroy'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
+
+    // ─── Smart Matching Engine ─────────────────────────────────────────────────
+    // GET /api/matches?requirement_id= (verified NGO) or ?donation_id= (donor)
+    $router->get('/api/matches', [App\Controllers\MatchController::class, 'index'], [AuthMiddleware::class]);
+
+    // GET /api/map/donations?requirement_id= OR ?bbox=minLng,minLat,maxLng,maxLat
+    // Returns GeoJSON-like markers (snapped public coords only, max 200)
+    $router->get('/api/map/donations', [App\Controllers\MapController::class, 'donations'], [AuthMiddleware::class]);
 };
