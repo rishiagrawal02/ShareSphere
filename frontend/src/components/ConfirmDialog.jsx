@@ -5,14 +5,20 @@ export function ConfirmDialog({
   isOpen,
   title = 'Confirm Action',
   message = 'Are you sure you want to proceed?',
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText,
+  confirmLabel = 'Confirm',
+  cancelText,
+  cancelLabel = 'Cancel',
   isDanger = false,
+  variant,
   isLoading = false,
   onConfirm,
   onCancel,
 }) {
   const confirmBtnRef = useRef(null);
+  const resolvedConfirmText = confirmText || confirmLabel;
+  const resolvedCancelText = cancelText || cancelLabel;
+  const resolvedIsDanger = isDanger || variant === 'danger';
 
   useEffect(() => {
     if (isOpen) {
@@ -67,22 +73,22 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all"
+            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all cursor-pointer"
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             ref={confirmBtnRef}
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all text-white ${
-              isDanger
+            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all text-white cursor-pointer ${
+              resolvedIsDanger
                 ? 'bg-red-600 hover:bg-red-500 focus:ring-red-500'
                 : 'bg-emerald-600 hover:bg-emerald-500 focus:ring-emerald-500'
             }`}
           >
-            {isLoading ? 'Processing...' : confirmText}
+            {isLoading ? 'Processing...' : resolvedConfirmText}
           </button>
         </div>
       </div>

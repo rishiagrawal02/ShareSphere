@@ -21,8 +21,15 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 
+// Donor Pages (Phase 13)
+import { DonorDashboard } from './pages/donor/DonorDashboard';
+import { PostDonation } from './pages/donor/PostDonation';
+import { MyDonations } from './pages/donor/MyDonations';
+import { DonationDetail } from './pages/donor/DonationDetail';
+import { RequestsReceived } from './pages/donor/RequestsReceived';
+import { MatchedNgos } from './pages/donor/MatchedNgos';
+
 // Role Dashboard Stubs (Phase 12 Foundation)
-import { DonorDashboardStub } from './pages/donor/DonorDashboardStub';
 import { NgoDashboardStub } from './pages/ngo/NgoDashboardStub';
 import { AdminDashboardStub } from './pages/admin/AdminDashboardStub';
 
@@ -54,12 +61,12 @@ export function App() {
                 }
               />
 
-              {/* Donor Routes */}
+              {/* Donor Routes (Phase 13) */}
               <Route
                 path="/donor"
                 element={
                   <RoleRoute roles={['donor', 'admin']}>
-                    <DonorDashboardStub />
+                    <DonorDashboard />
                   </RoleRoute>
                 }
               />
@@ -67,7 +74,7 @@ export function App() {
                 path="/donor/donations"
                 element={
                   <RoleRoute roles={['donor', 'admin']}>
-                    <DonorDashboardStub />
+                    <MyDonations />
                   </RoleRoute>
                 }
               />
@@ -75,15 +82,39 @@ export function App() {
                 path="/donor/donations/new"
                 element={
                   <RoleRoute roles={['donor', 'admin']}>
-                    <DonorDashboardStub />
+                    <PostDonation />
                   </RoleRoute>
                 }
               />
               <Route
-                path="/donor/map"
+                path="/donor/donations/:id"
                 element={
                   <RoleRoute roles={['donor', 'admin']}>
-                    <DonorDashboardStub />
+                    <DonationDetail />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/donor/donations/:id/edit"
+                element={
+                  <RoleRoute roles={['donor', 'admin']}>
+                    <PostDonation />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/donor/donations/:id/matches"
+                element={
+                  <RoleRoute roles={['donor', 'admin']}>
+                    <MatchedNgos />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/donor/requests"
+                element={
+                  <RoleRoute roles={['donor', 'admin']}>
+                    <RequestsReceived />
                   </RoleRoute>
                 }
               />
