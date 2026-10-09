@@ -94,8 +94,91 @@ class UserRepository
     public function updateStatus(int $id, string $status): void
     {
         $stmt = $this->pdo->prepare("
-            UPDATE users SET account_status = :status WHERE id = :id
+            UPDATE users SET account_status = :status, updated_at = NOW() WHERE id = :id
         ");
         $stmt->execute([':status' => $status, ':id' => $id]);
+    }
+
+    public function listUsers(array $filters = [], int $limit = 20, int $offset = 0): array
+    {
+        $sql = "
+            SELECT u.id, u.name, u.email, u.role, u.account_status, u.phone,
+                   u.created_at, u.updated_at, u.last_login_at,
+                   n.id AS ngo_id, n.organization_name, n.verification_status AS ngo_verification_status
+            FROM users u
+            LEFT JOIN ngos n ON n.user_id = u.id
+            WHERE 1=1
+        ";
+        $params = [];
+
+        if (!empty($filters['role'])) {
+            $sql .= " AND u.role = :role";
+            $params[':role'] = $filters['role'];
+        }
+
+        if (!empty($filters['status'])) {
+            $sql .= " AND u.account_status = :status";
+            $params[':status'] = $filters['status'];
+        }
+
+        if (!empty($filters['q'])) {
+            $sql .= " AND (u.name ILIKE :q OR u.email ILIKE :q OR n.organization_name ILIKE :q)";
+            $params[':q'] = '%' . $filters['q'] . '%';
+        }
+
+        $sql .= " ORDER BY u.created_at DESC LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countUsers(array $filters = []): int
+    {
+        $sql = "
+            SELECT COUNT(*)
+            FROM users u
+            LEFT JOIN ngos n ON n.user_id = u.id
+            WHERE 1=1
+        ";
+        $params = [];
+
+        if (!empty($filters['role'])) {
+            $sql .= " AND u.role = :role";
+            $params[':role'] = $filters['role'];
+        }
+
+        if (!empty($filters['status'])) {
+            $sql .= " AND u.account_status = :status";
+            $params[':status'] = $filters['status'];
+        }
+
+        if (!empty($filters['q'])) {
+            $sql .= " AND (u.name ILIKE :q OR u.email ILIKE :q OR n.organization_name ILIKE :q)";
+            $params[':q'] = '%' . $filters['q'] . '%';
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function countActiveAdmins(): int
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT COUNT(*)
+            FROM users
+            WHERE role = 'admin' AND account_status = 'active'
+        ");
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
     }
 }
