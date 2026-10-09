@@ -51,6 +51,7 @@ try {
     $request = Request::fromGlobals();
 
     $router = new Router();
+    $router->use(\App\Middleware\RequestIdMiddleware::class);
     $registerRoutes = require __DIR__ . '/../src/routes.php';
     $registerRoutes($router);
 
