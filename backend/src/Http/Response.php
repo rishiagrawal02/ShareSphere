@@ -82,6 +82,17 @@ class Response
         return $this->headers;
     }
 
+    public function getHeader(string $name, ?string $default = null): ?string
+    {
+        $lookup = strtolower($name);
+        foreach ($this->headers as $k => $v) {
+            if (strtolower((string) $k) === $lookup) {
+                return (string) $v;
+            }
+        }
+        return $default;
+    }
+
     public function getContent(): string
     {
         return $this->content;
