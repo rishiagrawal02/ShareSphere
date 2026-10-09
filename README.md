@@ -19,9 +19,26 @@
 
 ---
 
-## Quick Start (coming soon)
+## Quick Start
 
-Full setup instructions will be added once the infrastructure phases are complete.
+### Prerequisites
+- Docker & Docker Compose (or local PostgreSQL 16 with PostGIS + Mailpit)
+- PHP 8.2+ with `pdo_pgsql`, `mbstring`, `fileinfo`, `gd`, `openssl`, `sodium`
+- Composer 2.x
+- Node.js 18+ and npm
+
+### Local Services Setup
+1. Copy environment configuration:
+   ```bash
+   cp .env.example .env
+   ```
+2. Start PostgreSQL + PostGIS and Mailpit services:
+   ```bash
+   docker compose up -d
+   ```
+   - PostgreSQL is exposed on port `5432` (`sharesphere_dev` and `sharesphere_test` databases).
+   - Mailpit UI is accessible at `http://localhost:8025` (SMTP on `1025`).
+
 
 ---
 

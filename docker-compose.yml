@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: sharesphere_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_SUPERUSER:-postgres}
+      POSTGRES_PASSWORD: ${DB_SUPERPASS:-postgres}
+      OWNER_PASS: ${DB_OWNER_PASS:-change-me}
+      APP_PASS: ${DB_PASS:-change-me}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_SUPERUSER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: sharesphere_mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAIL_PORT:-1025}:1025"
+      - "8025:8025"
+
+volumes:
+  db_data:
