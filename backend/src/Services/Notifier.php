@@ -22,6 +22,8 @@ class Notifier
     public const TYPE_OTP_ISSUED         = 'otp.issued';
     public const TYPE_HANDOVER_COMPLETED = 'handover.completed';
     public const TYPE_DONATION_CANCELLED = 'donation.cancelled';
+    public const TYPE_USER_SUSPENDED     = 'user.suspended';
+    public const TYPE_SYSTEM             = 'system.alert';
 
     private PDO $pdo;
     private Outbox $outbox;

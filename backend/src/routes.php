@@ -105,4 +105,19 @@ return function (Router $router): void {
     $router->post('/api/pickups/{id}/verify-otp', [App\Controllers\PickupController::class, 'verifyOtp'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('donor'), CsrfMiddleware::class]);
     $router->post('/api/pickups/{id}/confirm-receipt', [App\Controllers\PickupController::class, 'confirmReceipt'], [AuthMiddleware::class, \App\Middleware\VerifiedNgoMiddleware::class, CsrfMiddleware::class]);
     $router->get('/api/donations/{id}/history', [App\Controllers\PickupController::class, 'donationHistory'], [AuthMiddleware::class]);
+
+    // ─── Admin Operations & Reports (Phase 11) ─────────────────────────────────
+    // Admin User Management (M11.1)
+    $router->get('/api/admin/users', [App\Controllers\AdminUserController::class, 'index'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
+    $router->get('/api/admin/users/{id}', [App\Controllers\AdminUserController::class, 'show'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
+    $router->patch('/api/admin/users/{id}/status', [App\Controllers\AdminUserController::class, 'updateStatus'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin'), CsrfMiddleware::class]);
+
+    // Admin Reports & Analytics (M11.2)
+    $router->get('/api/admin/reports/summary', [App\Controllers\AdminReportController::class, 'summary'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
+    $router->get('/api/admin/reports/trends', [App\Controllers\AdminReportController::class, 'trends'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
+    $router->get('/api/admin/reports/categories', [App\Controllers\AdminReportController::class, 'categories'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
+    $router->get('/api/admin/audit-logs', [App\Controllers\AdminReportController::class, 'auditLogs'], [AuthMiddleware::class, new \App\Middleware\RoleMiddleware('admin')]);
+
+    // Role-Scoped Dashboard (M11.2)
+    $router->get('/api/dashboard', [App\Controllers\DashboardController::class, 'index'], [AuthMiddleware::class]);
 };
