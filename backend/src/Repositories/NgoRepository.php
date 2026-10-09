@@ -118,7 +118,7 @@ class NgoRepository
             SELECT n.id, n.user_id, n.organization_name, n.registration_number, n.address_text,
                    ST_Y(n.location::geometry) as latitude, ST_X(n.location::geometry) as longitude,
                    n.service_radius_km, n.verification_status, n.reviewed_by, n.reviewed_at, n.review_note,
-                   n.created_at, n.updated_at, u.name as contact_name, u.email as contact_email, u.phone as contact_phone
+                   n.created_at, n.updated_at, u.name as contact_name, u.email as contact_email, u.phone as contact_phone, u.account_status as user_status
             FROM ngos n
             JOIN users u ON n.user_id = u.id
             WHERE n.id = :id
@@ -134,7 +134,7 @@ class NgoRepository
             SELECT n.id, n.user_id, n.organization_name, n.registration_number, n.address_text,
                    ST_Y(n.location::geometry) as latitude, ST_X(n.location::geometry) as longitude,
                    n.service_radius_km, n.verification_status, n.reviewed_by, n.reviewed_at, n.review_note,
-                   n.created_at, n.updated_at, u.name as contact_name, u.email as contact_email, u.phone as contact_phone
+                   n.created_at, n.updated_at, u.name as contact_name, u.email as contact_email, u.phone as contact_phone, u.account_status as user_status
             FROM ngos n
             JOIN users u ON n.user_id = u.id
             WHERE n.user_id = :user_id

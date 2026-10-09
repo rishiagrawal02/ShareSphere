@@ -6,8 +6,8 @@ namespace App\Http\Exceptions;
 
 class ConflictException extends HttpException
 {
-    public function __construct(string $message = 'Conflict occurred', string $errorCode = 'CONFLICT')
+    public function __construct(string $message = 'Conflict occurred', string $errorCode = 'CONFLICT', array $fields = [])
     {
-        parent::__construct($message, $errorCode, 409);
+        parent::__construct($message, $errorCode, 409, $fields);
     }
 }

@@ -21,14 +21,18 @@ $args = array_slice($argv, 1);
 $command = $args[0] ?? 'status';
 
 $steps = 1;
+$dbName = null;
 foreach ($args as $arg) {
     if (str_starts_with($arg, '--steps=')) {
         $steps = (int) substr($arg, 8);
     }
+    if (str_starts_with($arg, '--db=')) {
+        $dbName = substr($arg, 5);
+    }
 }
 
 try {
-    $pdo = Database::getOwnerConnection();
+    $pdo = Database::getOwnerConnection($dbName);
 
     // Ensure schema_migrations table exists
     $pdo->exec("
