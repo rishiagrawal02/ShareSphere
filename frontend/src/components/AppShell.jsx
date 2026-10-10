@@ -56,6 +56,7 @@ export function AppShell({ children }) {
         { to: '/ngo', label: 'Dashboard', icon: BarChart3, end: true },
         { to: '/ngo/requirements', label: 'Requirements', icon: ClipboardList },
         { to: '/ngo/matches', label: 'Matched Donations', icon: MapPin },
+        { to: '/ngo/requests', label: 'My Requests', icon: Inbox },
         { to: '/ngo/pickups', label: 'Pickups', icon: Package },
         { to: '/profile', label: 'Organization Profile', icon: User },
       ];
