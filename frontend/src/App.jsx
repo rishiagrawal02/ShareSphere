@@ -29,8 +29,14 @@ import { DonationDetail } from './pages/donor/DonationDetail';
 import { RequestsReceived } from './pages/donor/RequestsReceived';
 import { MatchedNgos } from './pages/donor/MatchedNgos';
 
+// NGO Pages (Phase 14)
+import { NgoDashboard } from './pages/ngo/NgoDashboard';
+import { PostRequirement } from './pages/ngo/PostRequirement';
+import { MyRequirements } from './pages/ngo/MyRequirements';
+import { MatchedDonations } from './pages/ngo/MatchedDonations';
+import { MyRequests } from './pages/ngo/MyRequests';
+
 // Role Dashboard Stubs (Phase 12 Foundation)
-import { NgoDashboardStub } from './pages/ngo/NgoDashboardStub';
 import { AdminDashboardStub } from './pages/admin/AdminDashboardStub';
 
 export function App() {
@@ -119,12 +125,12 @@ export function App() {
                 }
               />
 
-              {/* NGO Routes */}
+              {/* NGO Routes (Phase 14) */}
               <Route
                 path="/ngo"
                 element={
                   <RoleRoute roles={['ngo', 'admin']}>
-                    <NgoDashboardStub />
+                    <NgoDashboard />
                   </RoleRoute>
                 }
               />
@@ -133,7 +139,37 @@ export function App() {
                 element={
                   <RoleRoute roles={['ngo', 'admin']}>
                     <VerifiedNgoRoute>
-                      <NgoDashboardStub />
+                      <MyRequirements />
+                    </VerifiedNgoRoute>
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/ngo/requirements/new"
+                element={
+                  <RoleRoute roles={['ngo', 'admin']}>
+                    <VerifiedNgoRoute>
+                      <PostRequirement />
+                    </VerifiedNgoRoute>
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/ngo/requirements/:id/edit"
+                element={
+                  <RoleRoute roles={['ngo', 'admin']}>
+                    <VerifiedNgoRoute>
+                      <PostRequirement />
+                    </VerifiedNgoRoute>
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/ngo/requirements/:requirementId/matches"
+                element={
+                  <RoleRoute roles={['ngo', 'admin']}>
+                    <VerifiedNgoRoute>
+                      <MatchedDonations />
                     </VerifiedNgoRoute>
                   </RoleRoute>
                 }
@@ -143,7 +179,17 @@ export function App() {
                 element={
                   <RoleRoute roles={['ngo', 'admin']}>
                     <VerifiedNgoRoute>
-                      <NgoDashboardStub />
+                      <MyRequirements />
+                    </VerifiedNgoRoute>
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/ngo/requests"
+                element={
+                  <RoleRoute roles={['ngo', 'admin']}>
+                    <VerifiedNgoRoute>
+                      <MyRequests />
                     </VerifiedNgoRoute>
                   </RoleRoute>
                 }
@@ -153,7 +199,7 @@ export function App() {
                 element={
                   <RoleRoute roles={['ngo', 'admin']}>
                     <VerifiedNgoRoute>
-                      <NgoDashboardStub />
+                      <div className="p-8 text-center text-slate-400">Pickups — Phase 15</div>
                     </VerifiedNgoRoute>
                   </RoleRoute>
                 }
