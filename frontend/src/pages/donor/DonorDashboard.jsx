@@ -100,6 +100,7 @@ export function DonorDashboard() {
       color: 'from-amber-600/20 to-orange-600/10 border-amber-500/30 text-amber-400',
       description: `${metrics.requests_accepted} accepted so far`,
       alert: metrics.requests_received > 0,
+      to: '/donor/requests',
     },
     {
       label: 'Scheduled Pickups',
@@ -107,6 +108,7 @@ export function DonorDashboard() {
       icon: Clock,
       color: 'from-purple-600/20 to-pink-600/10 border-purple-500/30 text-purple-400',
       description: 'Handovers in progress',
+      to: '/donor/pickups',
     },
     {
       label: 'Completed Handovers',
@@ -164,10 +166,9 @@ export function DonorDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((card, idx) => {
           const Icon = card.icon;
-          return (
+          const content = (
             <div
-              key={idx}
-              className={`bg-slate-900/80 border ${card.color} rounded-2xl p-5 shadow-lg backdrop-blur-sm relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5`}
+              className={`bg-slate-900/80 border ${card.color} rounded-2xl p-5 shadow-lg backdrop-blur-sm relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 h-full`}
             >
               <div className="flex items-center justify-between gap-2 mb-3">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -184,6 +185,14 @@ export function DonorDashboard() {
                 {card.description}
               </p>
             </div>
+          );
+
+          return card.to ? (
+            <Link key={idx} to={card.to} className="block">
+              {content}
+            </Link>
+          ) : (
+            <div key={idx}>{content}</div>
           );
         })}
       </div>

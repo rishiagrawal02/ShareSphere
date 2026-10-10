@@ -36,6 +36,12 @@ import { MyRequirements } from './pages/ngo/MyRequirements';
 import { MatchedDonations } from './pages/ngo/MatchedDonations';
 import { MyRequests } from './pages/ngo/MyRequests';
 
+// Pickup & Notification Pages (Phase 15)
+import { PickupsList } from './pages/pickup/PickupsList';
+import { PickupDetail } from './pages/pickup/PickupDetail';
+import { SchedulePickup } from './pages/pickup/SchedulePickup';
+import { NotificationsPage } from './pages/NotificationsPage';
+
 // Role Dashboard Stubs (Phase 12 Foundation)
 import { AdminDashboardStub } from './pages/admin/AdminDashboardStub';
 
@@ -124,6 +130,22 @@ export function App() {
                   </RoleRoute>
                 }
               />
+              <Route
+                path="/donor/pickups"
+                element={
+                  <RoleRoute roles={['donor', 'admin']}>
+                    <PickupsList />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/donor/pickups/:id"
+                element={
+                  <RoleRoute roles={['donor', 'admin']}>
+                    <PickupDetail />
+                  </RoleRoute>
+                }
+              />
 
               {/* NGO Routes (Phase 14) */}
               <Route
@@ -199,8 +221,44 @@ export function App() {
                 element={
                   <RoleRoute roles={['ngo', 'admin']}>
                     <VerifiedNgoRoute>
-                      <div className="p-8 text-center text-slate-400">Pickups — Phase 15</div>
+                      <PickupsList />
                     </VerifiedNgoRoute>
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/ngo/pickups/:id"
+                element={
+                  <RoleRoute roles={['ngo', 'admin']}>
+                    <VerifiedNgoRoute>
+                      <PickupDetail />
+                    </VerifiedNgoRoute>
+                  </RoleRoute>
+                }
+              />
+
+              {/* Shared Pickup Routes */}
+              <Route
+                path="/pickups"
+                element={
+                  <RoleRoute roles={['donor', 'ngo', 'admin']}>
+                    <PickupsList />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/pickups/new"
+                element={
+                  <RoleRoute roles={['donor', 'ngo', 'admin']}>
+                    <SchedulePickup />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/pickups/:id"
+                element={
+                  <RoleRoute roles={['donor', 'ngo', 'admin']}>
+                    <PickupDetail />
                   </RoleRoute>
                 }
               />
@@ -259,8 +317,8 @@ export function App() {
               <Route
                 path="/notifications"
                 element={
-                  <RoleRoute>
-                    <div className="p-8 text-center text-slate-400">Notification Center</div>
+                  <RoleRoute roles={['donor', 'ngo', 'admin']}>
+                    <NotificationsPage />
                   </RoleRoute>
                 }
               />
