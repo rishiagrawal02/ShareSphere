@@ -42,8 +42,15 @@ import { PickupDetail } from './pages/pickup/PickupDetail';
 import { SchedulePickup } from './pages/pickup/SchedulePickup';
 import { NotificationsPage } from './pages/NotificationsPage';
 
-// Role Dashboard Stubs (Phase 12 Foundation)
-import { AdminDashboardStub } from './pages/admin/AdminDashboardStub';
+// Admin Pages (Phase 16)
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { Ngos } from './pages/admin/Ngos';
+import { NgoDetail } from './pages/admin/NgoDetail';
+import { Users } from './pages/admin/Users';
+import { Categories } from './pages/admin/Categories';
+import { DonationModeration } from './pages/admin/DonationModeration';
+import { Reports } from './pages/admin/Reports';
+import { AuditLogs } from './pages/admin/AuditLogs';
 
 export function App() {
   return (
@@ -263,12 +270,12 @@ export function App() {
                 }
               />
 
-              {/* Admin Routes */}
+              {/* Admin Routes (Phase 16) */}
               <Route
                 path="/admin"
                 element={
                   <RoleRoute roles={['admin']}>
-                    <AdminDashboardStub />
+                    <AdminDashboard />
                   </RoleRoute>
                 }
               />
@@ -276,7 +283,15 @@ export function App() {
                 path="/admin/ngos"
                 element={
                   <RoleRoute roles={['admin']}>
-                    <AdminDashboardStub />
+                    <Ngos />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/admin/ngos/:id"
+                element={
+                  <RoleRoute roles={['admin']}>
+                    <NgoDetail />
                   </RoleRoute>
                 }
               />
@@ -284,7 +299,7 @@ export function App() {
                 path="/admin/users"
                 element={
                   <RoleRoute roles={['admin']}>
-                    <AdminDashboardStub />
+                    <Users />
                   </RoleRoute>
                 }
               />
@@ -292,7 +307,15 @@ export function App() {
                 path="/admin/categories"
                 element={
                   <RoleRoute roles={['admin']}>
-                    <AdminDashboardStub />
+                    <Categories />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/admin/donations"
+                element={
+                  <RoleRoute roles={['admin']}>
+                    <DonationModeration />
                   </RoleRoute>
                 }
               />
@@ -300,7 +323,7 @@ export function App() {
                 path="/admin/reports"
                 element={
                   <RoleRoute roles={['admin']}>
-                    <AdminDashboardStub />
+                    <Reports />
                   </RoleRoute>
                 }
               />
@@ -308,7 +331,7 @@ export function App() {
                 path="/admin/audit-logs"
                 element={
                   <RoleRoute roles={['admin']}>
-                    <AdminDashboardStub />
+                    <AuditLogs />
                   </RoleRoute>
                 }
               />
