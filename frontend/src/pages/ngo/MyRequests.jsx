@@ -228,13 +228,17 @@ export function MyRequests() {
                         Cancel
                       </button>
                     )}
-                    {isAccepted && req.pickup_id && (
+                    {isAccepted && (
                       <Link
-                        to={`/ngo/pickups/${req.pickup_id}`}
+                        to={
+                          req.pickup_id
+                            ? `/pickups/${req.pickup_id}`
+                            : `/pickups/new?allocation_id=${req.allocation_id || req.id}`
+                        }
                         id={`goto-pickup-${req.id}`}
                         className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs border border-purple-500/20 transition-all"
                       >
-                        Schedule Pickup
+                        {req.pickup_id ? 'View Pickup' : 'Schedule Pickup'}
                         <ArrowRight size={12} />
                       </Link>
                     )}

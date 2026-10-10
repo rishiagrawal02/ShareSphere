@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { NotificationBell } from './NotificationBell';
 import {
   Globe,
   HeartHandshake,
@@ -18,6 +19,7 @@ import {
   X,
   FileText,
   Inbox,
+  Calendar,
 } from 'lucide-react';
 
 export function AppShell({ children }) {
@@ -47,6 +49,7 @@ export function AppShell({ children }) {
         { to: '/donor/donations/new', label: 'Donate Items', icon: Package },
         { to: '/donor/donations', label: 'My Donations', icon: ClipboardList },
         { to: '/donor/requests', label: 'Requests', icon: Inbox },
+        { to: '/donor/pickups', label: 'Pickups', icon: Calendar },
         { to: '/profile', label: 'Profile', icon: User },
       ];
     }
@@ -122,13 +125,7 @@ export function AppShell({ children }) {
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                <Link
-                  to="/notifications"
-                  aria-label="View notifications"
-                  className="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
-                >
-                  <Bell size={16} />
-                </Link>
+                <NotificationBell />
 
                 <div className="hidden sm:flex flex-col text-right">
                   <span className="text-xs font-semibold text-white leading-tight">{user.name}</span>

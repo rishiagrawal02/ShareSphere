@@ -312,10 +312,11 @@ export function RequestsReceived() {
                         <span>Request Accepted</span>
                       </span>
                       <Link
-                        to={`/donor/donations/${req.donation_id}`}
-                        className="text-xs text-slate-400 hover:text-white underline underline-offset-2"
+                        to={req.pickup_id ? `/pickups/${req.pickup_id}` : '/donor/pickups'}
+                        className="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1"
                       >
-                        View Item Status
+                        <span>{req.pickup_id ? 'View Pickup' : 'Coordinate Pickup'}</span>
+                        <ArrowRight size={12} />
                       </Link>
                     </div>
                   ) : (
