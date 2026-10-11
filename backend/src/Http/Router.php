@@ -63,6 +63,14 @@ class Router
         ];
     }
 
+    /**
+     * @return array<int, array{method: string, path: string, regex: string, handler: mixed, middleware: array}>
+     */
+    public function getRoutes(): array
+    {
+        return $this->routes;
+    }
+
     public function use(callable|object|string $middleware): void
     {
         $this->globalMiddleware[] = $middleware;
