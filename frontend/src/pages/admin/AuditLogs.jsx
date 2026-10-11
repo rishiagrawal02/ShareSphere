@@ -78,7 +78,7 @@ export function AuditLogs() {
         setLogs(items);
         setTotal(res?.meta?.total ?? res?.data?.total ?? items.length);
       } catch (err) {
-        setError(err.message || 'Failed to load audit logs');
+        setError(err instanceof ApiError ? err : new ApiError(500, 'INTERNAL_ERROR', 'Failed to load audit logs.'));
       } finally {
         setLoading(false);
       }
@@ -275,7 +275,7 @@ export function AuditLogs() {
       {loading ? (
         <LoadingState message="Loading audit events..." />
       ) : error ? (
-        <ErrorState message={error} onRetry={() => loadLogs(pageParam)} />
+        <ErrorState error={error} onRetry={() => loadLogs(pageParam)} />
       ) : logs.length === 0 ? (
         <EmptyState
           icon={Shield}

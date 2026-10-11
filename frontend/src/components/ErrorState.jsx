@@ -1,12 +1,32 @@
 import React from 'react';
 import { AlertCircle, RotateCcw } from 'lucide-react';
+import { getErrorMessage } from '../lib/errorMessages';
 
+/**
+ * ErrorState — standardized full-page error display (Phase 17).
+ *
+ * Accepts either:
+ *  - `error` (ApiError | Error): Automatically resolved to a friendly message
+ *    via getErrorMessage(). The requestId is surfaced from ApiError.requestId.
+ *  - `message` (string): Raw string override (used when error is not an object).
+ *
+ * All remaining props (title, requestId, onRetry) can still override defaults.
+ */
 export function ErrorState({
   title = 'Something went wrong',
-  message = 'An unexpected error occurred while loading this view.',
+  message,
+  error = null,
   requestId = null,
   onRetry = null,
 }) {
+  // Resolve friendly message: error object takes priority over message string
+  const displayMessage = error
+    ? getErrorMessage(error)
+    : (message || 'An unexpected error occurred while loading this view.');
+
+  // Surface requestId from ApiError automatically if not overridden
+  const displayRequestId = requestId || (error?.requestId ?? null);
+
   return (
     <div
       role="alert"
@@ -16,11 +36,11 @@ export function ErrorState({
         <AlertCircle size={28} />
       </div>
       <h3 className="text-base font-bold text-white mb-2">{title}</h3>
-      <p className="text-sm text-red-200/80 mb-4">{message}</p>
+      <p className="text-sm text-red-200/80 mb-4">{displayMessage}</p>
 
-      {requestId && (
+      {displayRequestId && (
         <p className="text-xs text-slate-400 font-mono mb-6 bg-slate-900/80 py-1.5 px-3 rounded-lg inline-block border border-slate-800">
-          Request ID: {requestId}
+          Request ID: {displayRequestId}
         </p>
       )}
 

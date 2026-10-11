@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import { PageHeader } from '../../components/PageHeader';
 import { FormField } from '../../components/FormField';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useToast } from '../../components/Toast';
 import { useSubmitOnce } from '../../components/useSubmitOnce';
+import { getErrorMessage } from '../../lib/errorMessages';
 import {
   User,
   Building2,
@@ -71,7 +72,7 @@ export function ProfilePage() {
       await refresh();
       toast.success('Profile information updated successfully.');
     } catch (err) {
-      toast.error(err.message || 'Failed to update profile.');
+      toast.error(getErrorMessage(err, 'Failed to update profile.'));
     }
   });
 
@@ -104,7 +105,7 @@ export function ProfilePage() {
       if (err.fields) {
         setPasswordErrors(err.fields);
       } else {
-        toast.error(err.message || 'Failed to update password.');
+        toast.error(getErrorMessage(err, 'Failed to update password.'));
       }
     }
   });
@@ -130,8 +131,14 @@ export function ProfilePage() {
 
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json?.error?.message || 'Document upload failed');
-      }
+          throw new ApiError(
+            res.status,
+            json?.error?.code || 'INTERNAL_ERROR',
+            json?.error?.message || 'Document upload failed',
+            {},
+            json?.error?.request_id || null
+          );
+        }
 
       setSelectedDocFile(null);
       setResubmitNote('');
@@ -139,7 +146,7 @@ export function ProfilePage() {
       await refresh();
       toast.success('Document uploaded successfully.');
     } catch (err) {
-      toast.error(err.message || 'Upload failed.');
+      toast.error(getErrorMessage(err, 'Upload failed.'));
     }
   });
 
@@ -149,7 +156,7 @@ export function ProfilePage() {
       await loadDocuments();
       toast.success('Document removed.');
     } catch (err) {
-      toast.error(err.message || 'Could not delete document.');
+      toast.error(getErrorMessage(err, 'Could not delete document.'));
     }
   };
 
@@ -159,7 +166,7 @@ export function ProfilePage() {
       await refresh();
       toast.success('Application resubmitted for admin review.');
     } catch (err) {
-      toast.error(err.message || 'Could not resubmit application.');
+      toast.error(getErrorMessage(err, 'Could not resubmit application.'));
     }
   };
 

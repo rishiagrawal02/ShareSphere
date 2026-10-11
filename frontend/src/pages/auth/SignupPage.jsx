@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { ApiError } from '../../api/client';
 import { FormField } from '../../components/FormField';
 import { LocationPicker } from '../../components/LocationPicker';
 import { useSubmitOnce } from '../../components/useSubmitOnce';
+import { getErrorMessage } from '../../lib/errorMessages';
 import {
   User,
   Building2,
@@ -158,7 +160,14 @@ export function SignupPage() {
 
         const json = await res.json();
         if (!res.ok) {
-          throw new Error(json?.error?.message || 'Registration failed');
+          const apiErr = new ApiError(
+            res.status,
+            json?.error?.code || 'INTERNAL_ERROR',
+            json?.error?.message || 'Registration failed',
+            json?.error?.fields || {},
+            json?.error?.request_id || null
+          );
+          throw apiErr;
         }
         resultUser = json.data?.user || json.data;
       } else {
@@ -174,7 +183,7 @@ export function SignupPage() {
       if (err.fields && Object.keys(err.fields).length > 0) {
         setFieldErrors(err.fields);
       } else {
-        setGlobalError(err.message || 'Registration could not be completed.');
+        setGlobalError(getErrorMessage(err, 'Registration could not be completed.'));
       }
     }
   });

@@ -52,13 +52,17 @@ import { DonationModeration } from './pages/admin/DonationModeration';
 import { Reports } from './pages/admin/Reports';
 import { AuditLogs } from './pages/admin/AuditLogs';
 
+// Quality & Error Boundary (Phase 17)
+import { ErrorBoundary } from './components/ErrorBoundary';
+
 export function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <AppShell>
-            <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
+            <AppShell>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/about" element={<AboutPage />} />
@@ -353,6 +357,7 @@ export function App() {
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
+  </ErrorBoundary>
   );
 }
 
