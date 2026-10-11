@@ -84,12 +84,20 @@ export function AppShell({ children }) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      {/* Skip to Main Content — WCAG 2.1 SC 2.4.1 */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:rounded-xl focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+      >
+        Skip to main content
+      </a>
+
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-950/50 group-hover:scale-105 transition-transform">
+          <Link to="/" className="flex items-center gap-2.5 group" aria-label="ShareSphere home">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-950/50 group-hover:scale-105 transition-transform" aria-hidden="true">
               <HeartHandshake size={22} />
             </div>
             <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
@@ -98,7 +106,7 @@ export function AppShell({ children }) {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1.5" aria-label="Main Navigation">
+          <nav className="hidden md:flex items-center gap-1.5" aria-label="Main navigation">
             {navLinks.map((item) => {
               const Icon = item.icon;
               return (
@@ -114,7 +122,7 @@ export function AppShell({ children }) {
                     }`
                   }
                 >
-                  <Icon size={15} />
+                  <Icon size={15} aria-hidden="true" />
                   <span>{item.label}</span>
                 </NavLink>
               );
@@ -165,17 +173,23 @@ export function AppShell({ children }) {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle navigation menu"
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-nav"
               className="md:hidden w-9 h-9 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300"
             >
-              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              {mobileMenuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Dropdown Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-b border-slate-800 px-4 pt-3 pb-5 space-y-2 animate-in slide-in-from-top-2 duration-150">
+          <nav
+            id="mobile-nav"
+            className="md:hidden bg-slate-900 border-b border-slate-800 px-4 pt-3 pb-5 space-y-2 animate-in slide-in-from-top-2 duration-150"
+            aria-label="Mobile navigation"
+          >
             {navLinks.map((item) => {
               const Icon = item.icon;
               return (
@@ -192,7 +206,7 @@ export function AppShell({ children }) {
                     }`
                   }
                 >
-                  <Icon size={18} />
+                  <Icon size={18} aria-hidden="true" />
                   <span>{item.label}</span>
                 </NavLink>
               );
@@ -216,12 +230,12 @@ export function AppShell({ children }) {
                 </Link>
               </div>
             )}
-          </div>
+          </nav>
         )}
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
 

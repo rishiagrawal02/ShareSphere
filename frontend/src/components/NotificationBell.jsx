@@ -158,10 +158,11 @@ export function NotificationBell() {
         aria-haspopup="true"
         className="relative w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
       >
-        <Bell size={16} />
+        <Bell size={16} aria-hidden="true" />
         {unreadCount > 0 && (
           <span
             id="notification-badge"
+            aria-hidden="true"
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-emerald-500 text-slate-950 text-[10px] font-bold rounded-full flex items-center justify-center shadow-md animate-pulse"
           >
             {unreadCount > 9 ? '9+' : unreadCount}

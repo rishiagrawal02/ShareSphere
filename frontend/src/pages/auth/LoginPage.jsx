@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { FormField } from '../../components/FormField';
 import { useSubmitOnce } from '../../components/useSubmitOnce';
+import { getErrorMessage } from '../../lib/errorMessages';
 import { HeartHandshake, LogIn, Lock, Mail, AlertCircle } from 'lucide-react';
 
 export function LoginPage() {
@@ -44,7 +45,7 @@ export function LoginPage() {
       }
     } catch (err) {
       // Security standard: Generic message without exposing whether user exists
-      setErrorMessage(err.message || 'Invalid email or password.');
+      setErrorMessage(getErrorMessage(err, 'Invalid email or password.'));
     }
   });
 
