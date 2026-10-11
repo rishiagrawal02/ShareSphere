@@ -91,12 +91,26 @@
 
 ## 3. Milestone 18.2 – Performance Measurement
 
-*(To be populated during Milestone 18.2 execution)*
+### 3.1 Pune ~120km Geolocation Dataset Seeding (`bin/seed-perf.php`)
+- **Seeded Entities:** 100,000 donations (85,117 active, 9,923 partially allocated), 500 NGOs, 500 requirements, 1,000 donors.
+- **Seeding Duration:** **7.54 seconds** (Target: < 5 min) using set-based PostgreSQL SQL `generate_series`.
+- **Status:** **PASS (T-18.2-01)**.
 
-- Pune ~120km Geolocation Matching Latency Benchmark (100k records)
-- Index Analysis (GiST vs Sequential)
-- API Read Latency (k6 Load Test)
-- Frontend Interactivity / Lighthouse Metrics
+### 3.2 Spatial Matching Engine Latency (`bin/benchmark-matching.php`)
+- **Queries:** 50 distinct NGO requirements × 20 repetitions = 1,000 executions on 100,000 donations.
+- **Median Latency (p50):** **13.58 ms**
+- **p95 Latency:** **25.24 ms** (Target: ≤ 250 ms) -> **PASS (T-18.2-02)**.
+- **GiST Index Verification:** `Index Scan using idx_donations_location_public` confirmed with `_st_expand()` bounding box filter (T-18.2-04). Planner cost reduction factor of **4.8x** vs sequential scan (T-18.2-03).
+
+### 3.3 Concurrent API Reads Load Test (`tests/load/api_reads.js` & `run_reads.cjs`)
+- **Concurrency:** 20 Virtual Users across `/api/donations`, `/api/matches`, `/api/notifications`, `/api/health`.
+- **Error Rate:** **0.00%** (185/185 successful requests) -> **PASS (Target < 1.0%)**.
+- **p95 Latency (Windows Dev Environment):** **2,892 ms** (Target < 300 ms).
+  - *Analysis (T-18.2-07 F):* Accurately reported as not met under Windows single-threaded CLI server (`php -S` does not support multi-worker `pcntl_fork`). Production deployment utilizes PHP-FPM with 20+ workers behind Nginx where individual 10-15 ms queries execute in parallel without sequential queue serialization.
+
+### 3.4 Frontend Interactivity Audits (Lighthouse CLI)
+- **Landing Page (`/`):** Performance 97, LCP 2.2s, **Time to Interactive (TTI): 2.2s** (Target ≤ 3s on 4G) -> **PASS (T-18.2-06)**.
+- **Login Page (`/login`):** Performance 94, LCP 2.1s, **Time to Interactive (TTI): 2.2s** (Target ≤ 3s on 4G) -> **PASS (T-18.2-06)**.
 
 ---
 
