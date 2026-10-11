@@ -12,9 +12,10 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       const res = await api.get('/api/auth/me');
-      setUser(res?.data || null);
+      const currentUser = res?.user || res?.data?.user || res?.data || null;
+      setUser(currentUser);
       setError(null);
-      return res?.data || null;
+      return currentUser;
     } catch (err) {
       setUser(null);
       if (err.status !== 401) {
@@ -42,14 +43,14 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await api.post('/api/auth/login', { email, password });
-    const loggedUser = res?.data?.user || res?.data || null;
+    const loggedUser = res?.user || res?.data?.user || res?.data || null;
     setUser(loggedUser);
     return loggedUser;
   };
 
   const register = async (formData) => {
     const res = await api.post('/api/auth/register', formData);
-    const newUser = res?.data?.user || res?.data || null;
+    const newUser = res?.user || res?.data?.user || res?.data || null;
     setUser(newUser);
     return newUser;
   };

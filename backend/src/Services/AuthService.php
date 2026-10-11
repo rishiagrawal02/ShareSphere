@@ -104,6 +104,9 @@ class AuthService
         SessionManager::regenerate();
 
         unset($user['password_hash']);
+        if ($user['role'] === 'ngo') {
+            $user['ngo'] = $this->userRepo->findNgoByUserId((int) $user['id']);
+        }
         return $user;
     }
 
@@ -131,6 +134,9 @@ class AuthService
         }
 
         unset($user['password_hash']);
+        if ($user['role'] === 'ngo') {
+            $user['ngo'] = $this->userRepo->findNgoByUserId((int) $user['id']);
+        }
         return $user;
     }
 }

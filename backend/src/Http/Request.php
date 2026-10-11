@@ -118,6 +118,11 @@ class Request
         return $this->query[$key] ?? $default;
     }
 
+    public function getQueryParams(): array
+    {
+        return $this->query;
+    }
+
     public function getHeader(string $name, ?string $default = null): ?string
     {
         return $this->headers[strtolower($name)] ?? $default;
