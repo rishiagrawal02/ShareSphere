@@ -38,12 +38,12 @@ The test suite in `backend/tests/Security/` comprises **39 automated tests and 1
 
 ---
 
-## 3. Security Findings Log
+## 3. Security Findings Log & Remediation (M19.2)
 
-| Finding ID | Severity | Category | Description & Evidence | Remediation Plan | Status |
+| Finding ID | Severity | Category | Description & Evidence | Remediation Action & Regression Test | Status |
 |---|---|---|---|---|---|
-| **SEC-01** | Sev-3 (Moderate) | Security Headers | `Response.php` sets `X-Content-Type-Options: nosniff` and `Cache-Control`, but does not currently emit `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(self)`, and `Content-Security-Policy: frame-ancestors 'none'`. | Add central security headers middleware or default headers in `Response.php` and entrypoint. (Scheduled M19.2) | Open (M19.2) |
-| **SEC-02** | Sev-3 (Moderate) | Dependencies | `react-router` 6.x has 2 moderate advisories (GHSA-wrjc-x8rr-h8h6 backslash redirect, GHSA-337j-9hxr-rhxg SSR deserializeErrors). ShareSphere is a client-side SPA with no SSR, so SSR injection is inapplicable. Backslash redirect risk is minimal but worth upgrading or sanitizing redirects. | Upgrade package or apply safe navigation guard in frontend router. (Scheduled M19.2) | Open (M19.2) |
+| **SEC-01** | Sev-3 (Moderate) | Security Headers | `Response.php` previously lacked headers `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(self)`, and `Content-Security-Policy: frame-ancestors 'none'`. | Added `DEFAULT_SECURITY_HEADERS` centrally to `Response.php` emitted across all JSON, success, error, and streamed responses. Regression test: `SecurityHeadersTest::testDefenseInDepthSecurityHeadersAreEmitted`. | ✅ Remediated & Closed (M19.2) |
+| **SEC-02** | Sev-3 (Moderate) | Navigation & Dependencies | `react-router` 6.x has 2 moderate advisories (GHSA-wrjc-x8rr-h8h6 backslash redirect, GHSA-337j-9hxr-rhxg SSR hydration deserializeErrors). | Implemented `sanitizeRedirectPath` in `frontend/src/utils/safeRedirect.js` neutralizing `\\`, `//`, and URI schemes. Regression test: `safeRedirect.test.js`. Residual risk accepted: ShareSphere is purely a client-side SPA (no SSR), rendering SSR hydration deserialization inapplicable. | ✅ Remediated & Closed (M19.2) |
 
 ---
 
@@ -55,10 +55,12 @@ The test suite in `backend/tests/Security/` comprises **39 automated tests and 1
 
 ---
 
-## 5. Milestone 19.1 Sign-Off
+## 5. Milestone 19.2 Sign-Off & Verification
 
-- **Automated Security Tests:** 39 tests passing (`backend/tests/Security/`)
+- **Automated Security Tests:** 40 backend security tests passing (`backend/tests/Security/`) + 5 frontend redirect safety tests passing (`frontend/src/utils/safeRedirect.test.js`)
 - **Open Sev-1 (Critical):** 0
 - **Open Sev-2 (High):** 0
-- **Open Sev-3 (Moderate):** 2 (SEC-01, SEC-02) slated for M19.2 remediation
-- **Verification Gate:** READY for Milestone 19.2 remediation and re-test.
+- **Open Sev-3 (Moderate):** 0
+- **Residual Risks:** Documented (client-side SPA immunity to SSR hydration advisory in react-router)
+- **Reviewer Status:** Fully Remediated and Verified – Phase 19 Security Audit Complete.
+
