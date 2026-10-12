@@ -65,4 +65,19 @@ class SecurityHeadersTest extends TestCase
         $this->assertSame(404, $res->getStatusCode());
         $this->assertSame('nosniff', $res->getHeader('x-content-type-options'));
     }
+
+    /**
+     * Regression test for SEC-01: Ensure security headers (X-Frame-Options,
+     * Referrer-Policy, Permissions-Policy, CSP frame-ancestors) are sent.
+     */
+    public function testDefenseInDepthSecurityHeadersAreEmitted(): void
+    {
+        $req = new Request('GET', '/api/health', []);
+        $res = $this->dispatch($req);
+
+        $this->assertSame('DENY', $res->getHeader('x-frame-options'), 'X-Frame-Options must be DENY');
+        $this->assertSame('strict-origin-when-cross-origin', $res->getHeader('referrer-policy'), 'Referrer-Policy must be strict-origin-when-cross-origin');
+        $this->assertNotEmpty($res->getHeader('permissions-policy'), 'Permissions-Policy header must be present');
+        $this->assertStringContainsString("frame-ancestors 'none'", (string) $res->getHeader('content-security-policy'), 'CSP frame-ancestors must be none');
+    }
 }
