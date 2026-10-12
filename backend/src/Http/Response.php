@@ -10,18 +10,28 @@ class Response
     private array $headers;
     private string $content;
 
+    public const DEFAULT_SECURITY_HEADERS = [
+        'X-Content-Type-Options' => 'nosniff',
+        'X-Frame-Options'        => 'DENY',
+        'Referrer-Policy'        => 'strict-origin-when-cross-origin',
+        'Permissions-Policy'     => 'camera=(), microphone=(), geolocation=(self)',
+        'Content-Security-Policy'=> "frame-ancestors 'none'",
+    ];
+
     public function __construct(string $content = '', int $statusCode = 200, array $headers = [])
     {
         $this->content = $content;
         $this->statusCode = $statusCode;
-        $this->headers = $headers;
+        $this->headers = array_merge(self::DEFAULT_SECURITY_HEADERS, $headers);
     }
 
     public static function json(array $data, int $statusCode = 200, array $headers = []): self
     {
+        $headers = array_merge(self::DEFAULT_SECURITY_HEADERS, $headers);
         $headers['Content-Type'] = 'application/json; charset=UTF-8';
-        $headers['X-Content-Type-Options'] = 'nosniff';
-        $headers['Cache-Control'] = 'no-store, no-cache, must-revalidate';
+        if (!isset($headers['Cache-Control'])) {
+            $headers['Cache-Control'] = 'no-store, no-cache, must-revalidate';
+        }
         
         $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         return new self($json !== false ? $json : '{}', $statusCode, $headers);
