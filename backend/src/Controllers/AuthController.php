@@ -11,13 +11,29 @@ use App\Support\SessionManager;
 
 class AuthController
 {
-    private AuthService $authService;
-    private \App\Services\NgoService $ngoService;
+    private ?AuthService $authService = null;
+    private ?\App\Services\NgoService $ngoService = null;
 
     public function __construct(?AuthService $authService = null, ?\App\Services\NgoService $ngoService = null)
     {
-        $this->authService = $authService ?? new AuthService();
-        $this->ngoService = $ngoService ?? new \App\Services\NgoService();
+        $this->authService = $authService;
+        $this->ngoService = $ngoService;
+    }
+
+    private function getAuthService(): AuthService
+    {
+        if ($this->authService === null) {
+            $this->authService = new AuthService();
+        }
+        return $this->authService;
+    }
+
+    private function getNgoService(): \App\Services\NgoService
+    {
+        if ($this->ngoService === null) {
+            $this->ngoService = new \App\Services\NgoService();
+        }
+        return $this->ngoService;
     }
 
     /**
@@ -30,7 +46,7 @@ class AuthController
         $role = $input['role'] ?? 'donor';
 
         if ($role === 'ngo') {
-            $result = $this->ngoService->registerNgo($input, $request->getFiles());
+            $result = $this->getNgoService()->registerNgo($input, $request->getFiles());
             return Response::json([
                 'status'  => 'ok',
                 'message' => 'NGO registration submitted for approval',
@@ -39,7 +55,7 @@ class AuthController
             ], 201);
         }
 
-        $user = $this->authService->registerDonor($input);
+        $user = $this->getAuthService()->registerDonor($input);
 
         return Response::json([
             'status'  => 'ok',
@@ -57,7 +73,7 @@ class AuthController
         $email    = trim((string) ($input['email'] ?? ''));
         $password = (string) ($input['password'] ?? '');
 
-        $user = $this->authService->login($email, $password);
+        $user = $this->getAuthService()->login($email, $password);
 
         return Response::json([
             'status'  => 'ok',
@@ -71,7 +87,7 @@ class AuthController
      */
     public function logout(Request $request): Response
     {
-        $this->authService->logout();
+        $this->getAuthService()->logout();
 
         return Response::json([
             'status'  => 'ok',
@@ -85,7 +101,7 @@ class AuthController
      */
     public function me(Request $request): Response
     {
-        $user = $this->authService->getCurrentUser();
+        $user = $this->getAuthService()->getCurrentUser();
 
         if ($user === null) {
             return Response::json([

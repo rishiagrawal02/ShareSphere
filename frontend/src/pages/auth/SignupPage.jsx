@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
-import { ApiError } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import { FormField } from '../../components/FormField';
 import { LocationPicker } from '../../components/LocationPicker';
 import { useSubmitOnce } from '../../components/useSubmitOnce';
@@ -9,20 +9,17 @@ import { getErrorMessage } from '../../lib/errorMessages';
 import {
   User,
   Building2,
-  Lock,
-  Mail,
-  Phone,
-  FileText,
   AlertCircle,
   CheckCircle2,
   Upload,
+  Leaf,
 } from 'lucide-react';
 
 export function SignupPage() {
-  const { register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { isSubmitting, handleSubmit } = useSubmitOnce();
+  const errorRef = useRef(null);
 
   const queryRole = new URLSearchParams(location.search).get('role');
   const [role, setRole] = useState(queryRole === 'ngo' ? 'ngo' : 'donor');
@@ -40,14 +37,15 @@ export function SignupPage() {
   const [regNumber, setRegNumber] = useState('');
   const [description, setDescription] = useState('');
   const [addressText, setAddressText] = useState('');
-  const [latitude, setLatitude] = useState(40.7128);
-  const [longitude, setLongitude] = useState(-74.0060);
+  const [latitude, setLatitude] = useState(18.5204);
+  const [longitude, setLongitude] = useState(73.8567);
   const [serviceRadiusKm, setServiceRadiusKm] = useState(25);
   const [documentFile, setDocumentFile] = useState(null);
 
-  // Validation & errors
+  // UI state
   const [fieldErrors, setFieldErrors] = useState({});
   const [globalError, setGlobalError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Password Strength check
   const getPasswordStrength = (pwd) => {
@@ -108,19 +106,21 @@ export function SignupPage() {
 
     if (!name.trim()) errors.name = 'Name is required';
     if (!email.trim()) errors.email = 'Valid email is required';
-    if (password.length < 8) errors.password = 'Password must be at least 8 characters';
+    if (password.length < 10) errors.password = 'Password must be at least 10 characters';
     if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match';
-    if (!termsAccepted) errors.terms = 'You must agree to the Terms and Privacy Policy';
+    if (!termsAccepted) errors.terms = 'You must agree to the Terms and Conditions';
 
     if (role === 'ngo') {
       if (!orgName.trim()) errors.organization_name = 'Organization name is required';
       if (!regNumber.trim()) errors.registration_number = 'Registration number is required';
       if (!addressText.trim()) errors.address_text = 'Physical address is required';
-      if (latitude === null || longitude === null) errors.location = 'Location coordinates are required';
+      if (!latitude || !longitude) errors.location = 'Organization coordinates must be selected on the map';
     }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
+      // Scroll to top of form to show errors
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
 
@@ -129,6 +129,8 @@ export function SignupPage() {
         name: name.trim(),
         email: email.trim(),
         password,
+        password_confirmation: confirmPassword,
+        accept_terms: true,
         role,
         phone: phone.trim() || undefined,
       };
@@ -143,14 +145,13 @@ export function SignupPage() {
         payload.service_radius_km = Number(serviceRadiusKm) || 25;
       }
 
-      let resultUser;
-
+      // Use raw API directly so we don't auto-login; redirect to login page instead
       if (role === 'ngo' && documentFile) {
         const formData = new FormData();
         Object.entries(payload).forEach(([k, v]) => {
-          if (v !== undefined) formData.append(k, v);
+          if (v !== undefined) formData.append(k, String(v));
         });
-        formData.append('document', documentFile);
+        formData.append('documents[]', documentFile);
 
         const res = await fetch('/api/auth/register', {
           method: 'POST',
@@ -160,254 +161,126 @@ export function SignupPage() {
 
         const json = await res.json();
         if (!res.ok) {
-          const apiErr = new ApiError(
+          const fields = json?.error?.fields || {};
+          if (fields.password_confirmation) fields.confirmPassword = fields.password_confirmation;
+          if (fields.accept_terms) fields.terms = fields.accept_terms;
+          if (Object.keys(fields).length > 0) {
+            setFieldErrors(fields);
+            errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+          }
+          throw new ApiError(
             res.status,
             json?.error?.code || 'INTERNAL_ERROR',
             json?.error?.message || 'Registration failed',
-            json?.error?.fields || {},
+            fields,
             json?.error?.request_id || null
           );
-          throw apiErr;
         }
-        resultUser = json.data?.user || json.data;
       } else {
-        resultUser = await register(payload);
+        await api.post('/api/auth/register', payload);
       }
 
-      if (role === 'ngo') {
-        navigate('/ngo', { replace: true });
-      } else {
-        navigate('/donor', { replace: true });
-      }
+      // ✅ Success — redirect to login with success message
+      navigate('/login?registered=1', { replace: true });
+
     } catch (err) {
-      if (err.fields && Object.keys(err.fields).length > 0) {
-        setFieldErrors(err.fields);
+      const fields = { ...(err?.fields || {}) };
+      if (fields.password_confirmation) fields.confirmPassword = fields.password_confirmation;
+      if (fields.accept_terms) fields.terms = fields.accept_terms;
+
+      if (Object.keys(fields).length > 0) {
+        setFieldErrors(fields);
       } else {
-        setGlobalError(getErrorMessage(err, 'Registration could not be completed.'));
+        setGlobalError(getErrorMessage(err, 'Registration could not be completed. Please try again.'));
       }
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-10 shadow-2xl space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Create ShareSphere Account</h1>
-          <p className="text-xs text-slate-400">Join our community giving & relief network</p>
+    <div style={{ maxWidth: 640, margin: '2rem auto', padding: '0 1rem 3rem' }}>
+      <div ref={errorRef} className="ss-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--ss-text)', marginBottom: '.25rem' }}>Create an Account</h1>
+          <p style={{ fontSize: '.8125rem', color: 'var(--ss-muted)' }}>Join ShareSphere and be a part of the change</p>
         </div>
 
         {/* Role Selector Toggle */}
-        <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-950 border border-slate-800 rounded-2xl">
-          <button
-            type="button"
-            onClick={() => setRole('donor')}
-            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-semibold transition-all ${
-              role === 'donor'
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/50'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <User size={16} />
-            <span>Donor (Individual / Surplus)</span>
+        <div className="ss-role-tabs">
+          <button type="button" className={`ss-role-tab${role === 'donor' ? ' active' : ''}`} onClick={() => setRole('donor')}>
+            <User size={14} /> Donor
           </button>
-
-          <button
-            type="button"
-            onClick={() => setRole('ngo')}
-            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-semibold transition-all ${
-              role === 'ngo'
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/50'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Building2 size={16} />
-            <span>NGO (Verified Charity)</span>
+          <button type="button" className={`ss-role-tab${role === 'ngo' ? ' active' : ''}`} onClick={() => setRole('ngo')}>
+            <Building2 size={14} /> NGO
+          </button>
+          <button type="button" className="ss-role-tab" style={{ opacity: .45, cursor: 'not-allowed' }} disabled>
+            Administrator
           </button>
         </div>
 
         {globalError && (
-          <div
-            role="alert"
-            className="p-4 bg-red-950/40 border border-red-900/60 rounded-xl text-xs text-red-300 flex items-start gap-2.5 animate-in fade-in"
-          >
-            <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-400" />
+          <div role="alert" className="ss-alert ss-alert-error">
+            <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>{globalError}</span>
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Section: Basic Account Info */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-              Account Credentials
-            </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.875rem' }}>
+            <h3 className="ss-label" style={{ color: 'var(--ss-green)' }}>Account Credentials</h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField id="signup-name" label="Full Name / Representative" required error={fieldErrors.name}>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Jane Doe"
-                  className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.875rem' }}>
+              <FormField id="signup-name" label="Full Name" required error={fieldErrors.name}>
+                <input id="signup-name" type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Nidhi Agrawal" className="ss-input" />
               </FormField>
-
-              <FormField id="signup-email" label="Email Address" required error={fieldErrors.email}>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="contact@organization.org"
-                  className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                />
+              <FormField id="signup-email" label="Email" required error={fieldErrors.email}>
+                <input id="signup-email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="nidhi@example.com" className="ss-input" />
               </FormField>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                id="signup-password"
-                label="Password"
-                required
-                error={fieldErrors.password}
-                hint="Minimum 8 characters with numbers or symbols"
-              >
-                <div>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                  />
-                  {password && (
-                    <div className="mt-1.5 flex items-center gap-2 text-[11px] text-slate-400">
-                      <span>Strength:</span>
-                      <span className="font-semibold text-emerald-400">{pwdStrength.label}</span>
-                    </div>
-                  )}
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.875rem' }}>
+              <FormField id="signup-password" label="Password" required error={fieldErrors.password} hint="Min. 10 chars">
+                <input id="signup-password" type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" className="ss-input" />
+                {password && (
+                  <span style={{ fontSize: '.75rem', color: 'var(--ss-green)', fontWeight: 600, marginTop: '.2rem', display: 'block' }}>Strength: {pwdStrength.label}</span>
+                )}
               </FormField>
-
-              <FormField
-                id="signup-confirm-password"
-                label="Confirm Password"
-                required
-                error={fieldErrors.confirmPassword}
-              >
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                />
+              <FormField id="signup-confirm-password" label="Confirm Password" required error={fieldErrors.confirmPassword}>
+                <input id="signup-confirm-password" type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••••" className="ss-input" />
               </FormField>
             </div>
 
-            <FormField id="signup-phone" label="Contact Phone" error={fieldErrors.phone} hint="Optional phone number">
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+1 555-0199"
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-              />
+            <FormField id="signup-phone" label="Phone (optional)" error={fieldErrors.phone}>
+              <input id="signup-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 9876543210" className="ss-input" />
             </FormField>
           </div>
 
           {/* Section: NGO Organization Specific Fields */}
           {role === 'ngo' && (
-            <div className="space-y-4 pt-4 border-t border-slate-800">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                Organization & Registration Details
-              </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.875rem', paddingTop: '1rem', borderTop: '1px solid var(--ss-border)' }}>
+              <h3 className="ss-label" style={{ color: 'var(--ss-green)' }}>Organization Details</h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  id="signup-org-name"
-                  label="Legal Organization Name"
-                  required
-                  error={fieldErrors.organization_name}
-                >
-                  <input
-                    type="text"
-                    required
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="Community Relief Foundation"
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                  />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.875rem' }}>
+                <FormField id="signup-org-name" label="Organization Name" required error={fieldErrors.organization_name}>
+                  <input id="signup-org-name" type="text" required value={orgName} onChange={e => setOrgName(e.target.value)} placeholder="Helping Hands NGO" className="ss-input" />
                 </FormField>
-
-                <FormField
-                  id="signup-reg-number"
-                  label="Government Registration / Tax ID"
-                  required
-                  error={fieldErrors.registration_number}
-                >
-                  <input
-                    type="text"
-                    required
-                    value={regNumber}
-                    onChange={(e) => setRegNumber(e.target.value)}
-                    placeholder="e.g. 501(c)(3) ID / REG-12345"
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                  />
+                <FormField id="signup-reg-number" label="Registration No." required error={fieldErrors.registration_number}>
+                  <input id="signup-reg-number" type="text" required value={regNumber} onChange={e => setRegNumber(e.target.value)} placeholder="REG-12345" className="ss-input" />
                 </FormField>
               </div>
 
-              <FormField
-                id="signup-description"
-                label="Mission & Activities"
-                hint="Brief description of the causes and communities your non-profit serves"
-                error={fieldErrors.description}
-              >
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="We provide educational supplies and emergency clothing to local youth shelters..."
-                  className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                />
+              <FormField id="signup-description" label="Mission & Activities" hint="Brief description" error={fieldErrors.description}>
+                <textarea id="signup-description" rows={3} value={description} onChange={e => setDescription(e.target.value)} placeholder="We provide educational supplies..." className="ss-textarea" />
               </FormField>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  id="signup-address"
-                  label="Official Physical Address"
-                  required
-                  error={fieldErrors.address_text}
-                >
-                  <input
-                    type="text"
-                    required
-                    value={addressText}
-                    onChange={(e) => setAddressText(e.target.value)}
-                    placeholder="123 Charity Lane, Suite 100"
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                  />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.875rem' }}>
+                <FormField id="signup-address" label="Physical Address" required error={fieldErrors.address_text}>
+                  <input id="signup-address" type="text" required value={addressText} onChange={e => setAddressText(e.target.value)} placeholder="123 Main St, Pune" className="ss-input" />
                 </FormField>
-
-                <FormField
-                  id="signup-radius"
-                  label="Service Radius (km)"
-                  required
-                  hint="Maximum distance for item collection"
-                  error={fieldErrors.service_radius_km}
-                >
-                  <input
-                    type="number"
-                    min={1}
-                    max={200}
-                    value={serviceRadiusKm}
-                    onChange={(e) => setServiceRadiusKm(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                  />
+                <FormField id="signup-radius" label="Service Radius (km)" required hint="Max collection distance" error={fieldErrors.service_radius_km}>
+                  <input id="signup-radius" type="number" min={1} max={200} value={serviceRadiusKm} onChange={e => setServiceRadiusKm(e.target.value)} className="ss-input" />
                 </FormField>
               </div>
 
@@ -424,25 +297,14 @@ export function SignupPage() {
                 error={fieldErrors.location}
               />
 
-              {/* Document Upload with client pre-check */}
-              <FormField
-                id="signup-document"
-                label="Upload Verification Document"
-                hint="Upload official registration certificate or 501(c)(3) determination letter (PDF, PNG, JPEG up to 10MB)"
-                error={fieldErrors.document}
-              >
-                <div className="flex items-center gap-3">
-                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-medium text-slate-200 transition-colors">
-                    <Upload size={14} />
-                    <span>Choose Document</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={handleFileChange}
-                      className="sr-only"
-                    />
+              <FormField id="signup-document" label="Verification Document" hint="PDF, PNG or JPEG up to 10MB" error={fieldErrors.document}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                  <label className="ss-btn ss-btn-ghost ss-btn-sm" style={{ cursor: 'pointer' }}>
+                    <Upload size={13} />
+                    Choose File
+                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange} style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} />
                   </label>
-                  <span className="text-xs text-slate-400 truncate max-w-xs">
+                  <span style={{ fontSize: '.75rem', color: 'var(--ss-muted)' }}>
                     {documentFile ? documentFile.name : 'No file selected'}
                   </span>
                 </div>
@@ -451,40 +313,41 @@ export function SignupPage() {
           )}
 
           {/* Terms & Conditions Checkbox */}
-          <div className="pt-2">
-            <label className="flex items-start gap-3 cursor-pointer">
+          <div style={{ paddingTop: '.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 required
                 checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-1 w-4 h-4 text-emerald-600 bg-slate-950 border-slate-700 rounded focus:ring-emerald-500 focus:ring-2"
+                onChange={e => setTermsAccepted(e.target.checked)}
+                style={{ marginTop: 3, width: 16, height: 16, accentColor: 'var(--ss-green)', flexShrink: 0 }}
               />
-              <span className="text-xs text-slate-400 leading-relaxed">
-                I agree to the ShareSphere Community Guidelines, Safety Standards, and Privacy Terms. I understand that all non-profit claims are subject to administrative verification.
+              <span style={{ fontSize: '.75rem', color: 'var(--ss-muted)', lineHeight: 1.6 }}>
+                I agree to the{' '}
+                <a href="#" style={{ color: 'var(--ss-green)', textDecoration: 'none', fontWeight: 600 }}>Terms and Conditions</a>
               </span>
             </label>
-            {fieldErrors.terms && (
-              <p className="text-xs text-red-400 mt-1">{fieldErrors.terms}</p>
-            )}
+            {fieldErrors.terms && <p className="ss-field-error">{fieldErrors.terms}</p>}
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold rounded-xl text-sm shadow-xl shadow-emerald-950/50 transition-all flex items-center justify-center gap-2"
+            className="ss-btn ss-btn-primary"
+            style={{ width: '100%', padding: '.6875rem', fontSize: '.9375rem' }}
           >
-            <CheckCircle2 size={16} />
-            <span>{isSubmitting ? 'Registering Account...' : 'Complete Registration'}</span>
+            {isSubmitting ? (
+              <><span className="ss-spinner" style={{ width: 17, height: 17 }} /> Creating Account…</>
+            ) : (
+              <><CheckCircle2 size={16} /> Sign Up</>
+            )}
           </button>
         </form>
 
-        <div className="text-center pt-4 border-t border-slate-800/80 text-xs text-slate-400">
+        <p style={{ textAlign: 'center', fontSize: '.8125rem', color: 'var(--ss-muted)', paddingTop: '1rem', borderTop: '1px solid var(--ss-border)' }}>
           Already have an account?{' '}
-          <Link to="/login" className="text-emerald-400 font-semibold hover:underline">
-            Sign in
-          </Link>
-        </div>
+          <Link to="/login" style={{ color: 'var(--ss-green)', fontWeight: 600, textDecoration: 'none' }}>Login</Link>
+        </p>
       </div>
     </div>
   );

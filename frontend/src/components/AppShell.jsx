@@ -12,7 +12,6 @@ import {
   Users,
   BarChart3,
   ShieldCheck,
-  Bell,
   User,
   LogOut,
   Menu,
@@ -20,12 +19,36 @@ import {
   FileText,
   Inbox,
   Calendar,
+  Leaf,
+  Bell,
+  Search,
+  Home,
+  ChevronRight,
 } from 'lucide-react';
+
+function Logo({ size = 24 }) {
+  return (
+    <div
+      style={{ width: size, height: size, background: 'var(--ss-green)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Leaf size={size * 0.55} color="#fff" />
+    </div>
+  );
+}
+
+function UserAvatar({ name, size = 30 }) {
+  const initials = (name || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div className="ss-user-avatar" style={{ width: size, height: size, fontSize: size * 0.35 }}>
+      {initials}
+    </div>
+  );
+}
 
 export function AppShell({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -33,47 +56,41 @@ export function AppShell({ children }) {
   };
 
   const getNavLinks = () => {
-    if (!user) {
-      return [
-        { to: '/', label: 'Home', icon: Globe },
-        { to: '/about', label: 'About', icon: HeartHandshake },
-        { to: '/how-it-works', label: 'How It Works', icon: Layers },
-        { to: '/impact', label: 'Impact', icon: BarChart3 },
-        { to: '/contact', label: 'Contact', icon: FileText },
-      ];
-    }
+    if (!user) return [];
 
     if (user.role === 'donor') {
       return [
-        { to: '/donor', label: 'Dashboard', icon: BarChart3, end: true },
-        { to: '/donor/donations/new', label: 'Donate Items', icon: Package },
+        { to: '/donor', label: 'Dashboard', icon: Home, end: true },
+        { to: '/donor/donations/new', label: 'Post Donation', icon: Package },
         { to: '/donor/donations', label: 'My Donations', icon: ClipboardList },
-        { to: '/donor/requests', label: 'Requests', icon: Inbox },
-        { to: '/donor/pickups', label: 'Pickups', icon: Calendar },
+        { to: '/donor/requests', label: 'Requests Received', icon: Inbox },
+        { to: '/donor/pickups', label: 'Scheduled Pickup', icon: Calendar },
         { to: '/profile', label: 'Profile', icon: User },
+        { to: '/logout', label: 'Logout', icon: LogOut, action: handleLogout },
       ];
     }
 
     if (user.role === 'ngo') {
       return [
-        { to: '/ngo', label: 'Dashboard', icon: BarChart3, end: true },
-        { to: '/ngo/requirements', label: 'Requirements', icon: ClipboardList },
+        { to: '/ngo', label: 'Dashboard', icon: Home, end: true },
+        { to: '/ngo/requirements/new', label: 'Post Requirement', icon: Package },
+        { to: '/ngo/requirements', label: 'My Requirements', icon: ClipboardList },
         { to: '/ngo/matches', label: 'Matched Donations', icon: MapPin },
-        { to: '/ngo/requests', label: 'My Requests', icon: Inbox },
-        { to: '/ngo/pickups', label: 'Pickups', icon: Package },
-        { to: '/profile', label: 'Organization Profile', icon: User },
+        { to: '/ngo/pickups', label: 'Scheduled Pickup', icon: Calendar },
+        { to: '/profile', label: 'Profile', icon: User },
+        { to: '/logout', label: 'Logout', icon: LogOut, action: handleLogout },
       ];
     }
 
     if (user.role === 'admin') {
       return [
-        { to: '/admin', label: 'Dashboard', icon: BarChart3, end: true },
-        { to: '/admin/ngos', label: 'NGO Verification', icon: ShieldCheck },
-        { to: '/admin/users', label: 'User Directory', icon: Users },
-        { to: '/admin/categories', label: 'Categories', icon: Layers },
+        { to: '/admin', label: 'Dashboard', icon: Home, end: true },
+        { to: '/admin/ngos', label: 'Manage NGOs', icon: ShieldCheck },
+        { to: '/admin/users', label: 'Manage Users', icon: Users },
+        { to: '/admin/categories', label: 'Manage Categories', icon: Layers },
         { to: '/admin/reports', label: 'Reports & Analytics', icon: BarChart3 },
         { to: '/admin/audit-logs', label: 'Audit Logs', icon: FileText },
-        { to: '/profile', label: 'Admin Profile', icon: User },
+        { to: '/logout', label: 'Logout', icon: LogOut, action: handleLogout },
       ];
     }
 
@@ -82,175 +99,232 @@ export function AppShell({ children }) {
 
   const navLinks = getNavLinks();
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-      {/* Skip to Main Content — WCAG 2.1 SC 2.4.1 */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:rounded-xl focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
-      >
-        Skip to main content
-      </a>
+  // ─── Public (unauthenticated) layout ─────────────────────────
+  if (!user) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--ss-bg)', display: 'flex', flexDirection: 'column' }}>
+        {/* Skip link */}
+        <a
+          href="#main-content"
+          className="ss-btn ss-btn-primary"
+          style={{ position: 'absolute', top: -100, left: 8, zIndex: 99, transition: 'top .15s' }}
+          onFocus={e => (e.currentTarget.style.top = '8px')}
+          onBlur={e => (e.currentTarget.style.top = '-100px')}
+        >
+          Skip to content
+        </a>
 
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group" aria-label="ShareSphere home">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-950/50 group-hover:scale-105 transition-transform" aria-hidden="true">
-              <HeartHandshake size={22} />
-            </div>
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              ShareSphere
-            </span>
-          </Link>
+        {/* Topbar */}
+        <header className="ss-topbar">
+          <div className="ss-topbar-inner">
+            <Link to="/" className="ss-topbar-logo">
+              <div className="ss-topbar-logo-icon"><Leaf size={18} /></div>
+              <span className="ss-topbar-logo-text">ShareSphere</span>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1.5" aria-label="Main navigation">
-            {navLinks.map((item) => {
-              const Icon = item.icon;
-              return (
+            <nav className="ss-topbar-nav" style={{ display: 'flex' }} aria-label="Main navigation">
+              {[
+                { to: '/', label: 'Home', end: true },
+                { to: '/about', label: 'About' },
+                { to: '/how-it-works', label: 'How it works' },
+                { to: '/impact', label: 'Impact' },
+                { to: '/contact', label: 'Contact' },
+              ].map(item => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                    }`
+                    `ss-topbar-nav-link${isActive ? ' active' : ''}`
                   }
                 >
-                  <Icon size={15} aria-hidden="true" />
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.625rem' }}>
+              <Link to="/login" className="ss-btn ss-btn-ghost" style={{ padding: '.4rem .875rem' }}>Login</Link>
+              <Link to="/signup" className="ss-btn ss-btn-primary" style={{ padding: '.4rem .875rem' }}>Sign Up</Link>
+            </div>
+          </div>
+        </header>
+
+        <main id="main-content" style={{ flex: 1 }}>
+          {children}
+        </main>
+
+        <footer style={{ background: 'var(--ss-surface)', borderTop: '1px solid var(--ss-border)', padding: '2rem 1.5rem' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+              <Logo size={26} />
+              <span style={{ fontWeight: 700, fontSize: '.9rem', color: 'var(--ss-text)' }}>ShareSphere</span>
+            </div>
+            <p style={{ fontSize: '.75rem', color: 'var(--ss-muted)', margin: 0 }}>
+              © {new Date().getFullYear()} ShareSphere. Connecting community surplus with verified NGO needs.
+            </p>
+            <nav style={{ display: 'flex', gap: '1.25rem' }}>
+              {[
+                { to: '/about', label: 'About' },
+                { to: '/how-it-works', label: 'How It Works' },
+                { to: '/impact', label: 'Impact' },
+                { to: '/contact', label: 'Contact' },
+              ].map(l => (
+                <Link key={l.to} to={l.to} style={{ fontSize: '.75rem', color: 'var(--ss-muted)', textDecoration: 'none' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--ss-green)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--ss-muted)'}
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  // ─── Authenticated sidebar layout ────────────────────────────
+  return (
+    <div className="ss-layout">
+      {/* Skip link */}
+      <a
+        href="#main-content"
+        className="ss-btn ss-btn-primary"
+        style={{ position: 'absolute', top: -100, left: 8, zIndex: 99, transition: 'top .15s' }}
+        onFocus={e => (e.currentTarget.style.top = '8px')}
+        onBlur={e => (e.currentTarget.style.top = '-100px')}
+      >
+        Skip to content
+      </a>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', zIndex: 40 }}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`ss-sidebar${mobileOpen ? ' mobile-open' : ''}`}
+        aria-label="Sidebar navigation"
+        id="sidebar"
+      >
+        {/* Logo */}
+        <Link to="/" className="ss-sidebar-logo" onClick={() => setMobileOpen(false)}>
+          <div className="ss-sidebar-logo-icon"><Leaf size={16} /></div>
+          <span className="ss-sidebar-logo-text">ShareSphere</span>
+        </Link>
+
+        {/* Navigation */}
+        <nav className="ss-sidebar-nav" aria-label="Dashboard navigation">
+          <div className="ss-sidebar-section">
+            {navLinks.map(item => {
+              const Icon = item.icon;
+              if (item.action) {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => { setMobileOpen(false); item.action(); }}
+                    className="ss-nav-link"
+                    style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left' }}
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              }
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `ss-nav-link${isActive ? ' active' : ''}`}
+                >
+                  <Icon size={16} aria-hidden="true" />
                   <span>{item.label}</span>
                 </NavLink>
               );
             })}
-          </nav>
+          </div>
+        </nav>
 
-          {/* User Status / Auth CTAs */}
-          <div className="flex items-center gap-3">
-            {user ? (
-              <div className="flex items-center gap-3">
-                <NotificationBell />
-
-                <div className="hidden sm:flex flex-col text-right">
-                  <span className="text-xs font-semibold text-white leading-tight">{user.name}</span>
-                  <span className="text-[10px] text-emerald-400 uppercase font-semibold tracking-wider">
-                    {user.role}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  aria-label="Log out"
-                  className="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-red-500/20 hover:text-red-400 border border-slate-700/60 flex items-center justify-center text-slate-400 transition-colors"
-                  title="Log out"
-                >
-                  <LogOut size={16} />
-                </button>
+        {/* User footer */}
+        <div className="ss-sidebar-footer">
+          <div className="ss-user-chip">
+            <UserAvatar name={user.name} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="ss-user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user.name}
               </div>
-            ) : (
-              <div className="hidden sm:flex items-center gap-2">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/signup"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-950/40 transition-all"
-                >
-                  Join ShareSphere
-                </Link>
-              </div>
-            )}
+              <div className="ss-user-role">{user.role}</div>
+            </div>
+          </div>
+        </div>
+      </aside>
 
-            {/* Mobile Menu Toggle */}
+      {/* Main content */}
+      <div className="ss-content">
+        {/* Content topbar */}
+        <div className="ss-content-topbar">
+          {/* Mobile menu toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(prev => !prev)}
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+            aria-controls="sidebar"
+            className="ss-btn ss-btn-ghost ss-btn-sm"
+            style={{ display: 'none' }}
+            id="mobile-menu-btn"
+          >
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-nav"
-              className="md:hidden w-9 h-9 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300"
+              onClick={() => setMobileOpen(prev => !prev)}
+              aria-label="Toggle navigation menu"
+              style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.35rem .6rem', background: 'transparent', border: '1px solid var(--ss-border)', borderRadius: 8, cursor: 'pointer', color: 'var(--ss-muted)' }}
             >
-              {mobileMenuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
+              <Menu size={18} />
+            </button>
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Right side — notifications + user */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+            <NotificationBell />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+              <UserAvatar name={user.name} size={32} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span className="ss-user-name">{user.name}</span>
+                <span className="ss-user-role">{user.role}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Log out"
+              className="ss-btn ss-btn-ghost ss-btn-sm"
+              style={{ padding: '.35rem .5rem' }}
+              title="Log out"
+            >
+              <LogOut size={16} />
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Drawer */}
-        {mobileMenuOpen && (
-          <nav
-            id="mobile-nav"
-            className="md:hidden bg-slate-900 border-b border-slate-800 px-4 pt-3 pb-5 space-y-2 animate-in slide-in-from-top-2 duration-150"
-            aria-label="Mobile navigation"
-          >
-            {navLinks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-slate-800'
-                    }`
-                  }
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{item.label}</span>
-                </NavLink>
-              );
-            })}
-
-            {!user && (
-              <div className="pt-3 border-t border-slate-800 flex flex-col gap-2">
-                <Link
-                  to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-xl"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl"
-                >
-                  Join ShareSphere
-                </Link>
-              </div>
-            )}
-          </nav>
-        )}
-      </header>
-
-      {/* Main Content Area */}
-      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-slate-900/60 border-t border-slate-800/60 py-8 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} ShareSphere. Connecting community surplus with active NGO needs.</p>
-          <div className="flex items-center gap-6 text-slate-400">
-            <Link to="/about" className="hover:text-emerald-400 transition-colors">About</Link>
-            <Link to="/how-it-works" className="hover:text-emerald-400 transition-colors">How It Works</Link>
-            <Link to="/impact" className="hover:text-emerald-400 transition-colors">Impact</Link>
-            <Link to="/contact" className="hover:text-emerald-400 transition-colors">Contact & Appeals</Link>
-          </div>
-        </div>
-      </footer>
+        {/* Page content */}
+        <main id="main-content" className="ss-content-body ss-fade-in">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

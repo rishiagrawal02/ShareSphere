@@ -2,24 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { api, ApiError } from '../../api/client';
-import { PageHeader } from '../../components/PageHeader';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingState } from '../../components/LoadingState';
 import { ErrorState } from '../../components/ErrorState';
 import { EmptyState } from '../../components/EmptyState';
 import {
   Package,
-  HeartHandshake,
-  Clock,
   CheckCircle2,
   Inbox,
   PlusCircle,
   ArrowRight,
-  TrendingUp,
-  MapPin,
-  Calendar,
+  Clock,
   Layers,
   Sparkles,
+  Eye,
 } from 'lucide-react';
 
 export function DonorDashboard() {
@@ -36,325 +32,182 @@ export function DonorDashboard() {
   });
   const [recentDonations, setRecentDonations] = useState([]);
 
-  const loadDashboardData = async () => {
+  const load = async () => {
     setLoading(true);
     setError(null);
     try {
       const [dashRes, donRes] = await Promise.all([
         api.get('/api/dashboard'),
-        api.get('/api/donations?scope=mine&limit=5'),
+        api.get('/api/donations?scope=mine&limit=4'),
       ]);
-
-      if (dashRes?.data) {
-        setMetrics((prev) => ({
-          ...prev,
-          ...dashRes.data,
-        }));
-      }
-
-      if (donRes?.data) {
-        setRecentDonations(donRes.data);
-      }
+      if (dashRes?.data) setMetrics(prev => ({ ...prev, ...dashRes.data }));
+      if (donRes?.data) setRecentDonations(donRes.data);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err);
-      } else {
-        setError(new ApiError(500, 'LOAD_FAILED', 'Failed to load donor dashboard data.'));
-      }
+      setError(err instanceof ApiError ? err : new ApiError(500, 'LOAD_FAILED', 'Failed to load dashboard.'));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  useEffect(() => { load(); }, []);
 
-  if (loading) {
-    return <LoadingState message="Loading your donor dashboard & listings..." />;
-  }
-
-  if (error) {
-    return <ErrorState error={error} onRetry={loadDashboardData} />;
-  }
+  if (loading) return <LoadingState message="Loading your dashboard…" />;
+  if (error) return <ErrorState error={error} onRetry={load} />;
 
   const statCards = [
     {
-      label: 'Total Donations',
+      label: 'Post Donations',
       value: metrics.total_donations,
       icon: Package,
-      color: 'from-blue-600/20 to-indigo-600/10 border-blue-500/30 text-blue-400',
-      description: 'All items posted',
+      iconBg: '#eef6f1',
+      iconColor: '#3a7c52',
+      to: '/donor/donations/new',
     },
     {
-      label: 'Active Listings',
-      value: metrics.active_donations,
+      label: 'My Donations',
+      value: metrics.total_donations,
       icon: Layers,
-      color: 'from-emerald-600/20 to-teal-600/10 border-emerald-500/30 text-emerald-400',
-      description: 'Ready for NGO match',
+      iconBg: '#eff6ff',
+      iconColor: '#3b82f6',
+      to: '/donor/donations',
     },
     {
       label: 'Requests Received',
       value: metrics.requests_received,
       icon: Inbox,
-      color: 'from-amber-600/20 to-orange-600/10 border-amber-500/30 text-amber-400',
-      description: `${metrics.requests_accepted} accepted so far`,
-      alert: metrics.requests_received > 0,
+      iconBg: '#fffbeb',
+      iconColor: '#f59e0b',
       to: '/donor/requests',
     },
     {
       label: 'Scheduled Pickups',
       value: metrics.scheduled_pickups,
       icon: Clock,
-      color: 'from-purple-600/20 to-pink-600/10 border-purple-500/30 text-purple-400',
-      description: 'Handovers in progress',
+      iconBg: '#f5f3ff',
+      iconColor: '#8b5cf6',
       to: '/donor/pickups',
-    },
-    {
-      label: 'Completed Handovers',
-      value: metrics.completed_handovers,
-      icon: CheckCircle2,
-      color: 'from-teal-600/20 to-emerald-600/10 border-teal-500/30 text-teal-400',
-      description: 'Direct community impact',
     },
   ];
 
+  const bigStats = [
+    { value: metrics.total_donations, label: 'Total\nDonations', color: '#3a7c52' },
+    { value: metrics.requests_accepted, label: 'Accepted', color: '#3b82f6' },
+    { value: metrics.scheduled_pickups, label: 'Scheduled', color: '#f59e0b' },
+    { value: metrics.completed_handovers, label: 'Completed', color: '#10b981' },
+  ];
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
-      {/* Page Header */}
-      <PageHeader
-        title={`Welcome back, ${user?.name || 'Donor'}!`}
-        subtitle="Manage your surplus item listings, track incoming NGO requests, and review successful handovers."
-        action={
-          <Link
-            to="/donor/donations/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/50 transition-all cursor-pointer"
-          >
-            <PlusCircle size={18} />
-            <span>Post New Donation</span>
-          </Link>
-        }
-      />
-
-      {/* Pending Requests Notification Banner */}
-      {metrics.requests_received > 0 && (
-        <div className="bg-gradient-to-r from-amber-950/60 to-orange-950/40 border border-amber-800/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-              <Inbox size={22} />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-white">
-                You have {metrics.requests_received} {metrics.requests_received === 1 ? 'incoming request' : 'incoming requests'} from verified NGOs
-              </h4>
-              <p className="text-xs text-amber-300/80 mt-0.5">
-                Review request quantities and accept them to unlock secure OTP pickup coordination.
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/donor/requests"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shrink-0"
-          >
-            <span>Review Requests</span>
-            <ArrowRight size={14} />
-          </Link>
+    <div className="ss-fade-in" style={{ maxWidth: 1100 }}>
+      {/* Page header */}
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+        <div>
+          <h1 className="ss-page-title">Donor Dashboard</h1>
+          <p style={{ fontSize: '.8125rem', color: 'var(--ss-muted)', marginTop: '.25rem' }}>
+            Welcome back, <strong>{user?.name}</strong>
+          </p>
         </div>
-      )}
+        <Link to="/donor/donations/new" className="ss-btn ss-btn-primary">
+          <PlusCircle size={15} />
+          Post Donation
+        </Link>
+      </div>
 
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {statCards.map((card, idx) => {
+      {/* Big stat banner */}
+      <div className="ss-card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 140 }}>
+          <div style={{ fontSize: '.75rem', color: 'var(--ss-muted)', fontWeight: 600, marginBottom: '.2rem' }}>Welcome back,</div>
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ss-text)' }}>{user?.name}</div>
+        </div>
+        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+          {bigStats.map((s, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.625rem', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: '.6875rem', color: 'var(--ss-muted)', whiteSpace: 'pre', textAlign: 'center', marginTop: '.15rem' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick action cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '.875rem', marginBottom: '1.5rem' }}>
+        {statCards.map((card, i) => {
           const Icon = card.icon;
-          const content = (
-            <div
-              className={`bg-slate-900/80 border ${card.color} rounded-2xl p-5 shadow-lg backdrop-blur-sm relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 h-full`}
+          return (
+            <Link
+              key={i}
+              to={card.to}
+              style={{ textDecoration: 'none' }}
             >
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  {card.label}
-                </span>
-                <div className={`p-2 rounded-xl bg-slate-950/60 border border-slate-800/80 ${card.color}`}>
-                  <Icon size={18} />
+              <div className="ss-card" style={{ padding: '1.125rem', display: 'flex', alignItems: 'center', gap: '.875rem', transition: 'all .16s' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ss-green-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ss-border)'; e.currentTarget.style.boxShadow = ''; }}
+              >
+                <div style={{ width: 42, height: 42, background: card.iconBg, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={20} style={{ color: card.iconColor }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '.75rem', color: 'var(--ss-muted)', fontWeight: 600 }}>{card.label}</div>
+                  <div style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--ss-text)', lineHeight: 1.2 }}>{card.value}</div>
                 </div>
               </div>
-              <div className="text-3xl font-extrabold text-white tracking-tight mb-1">
-                {card.value}
-              </div>
-              <p className="text-xs text-slate-400">
-                {card.description}
-              </p>
-            </div>
-          );
-
-          return card.to ? (
-            <Link key={idx} to={card.to} className="block">
-              {content}
             </Link>
-          ) : (
-            <div key={idx}>{content}</div>
           );
         })}
       </div>
 
-      {/* Quick Action Hub */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link
-          to="/donor/donations/new"
-          className="bg-slate-900/70 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-5 flex items-start gap-4 transition-all group"
-        >
-          <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 group-hover:scale-110 transition-transform">
-            <PlusCircle size={22} />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
-              Donate Items
-            </h4>
-            <p className="text-xs text-slate-400 mt-1">
-              Create a listing with photos, condition, category, and your approximate pickup location.
-            </p>
-          </div>
-        </Link>
-
-        <Link
-          to="/donor/donations"
-          className="bg-slate-900/70 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-5 flex items-start gap-4 transition-all group"
-        >
-          <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-800/80 text-blue-400 group-hover:scale-110 transition-transform">
-            <Package size={22} />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
-              My Donations
-            </h4>
-            <p className="text-xs text-slate-400 mt-1">
-              Track remaining inventory quantities, inspect status timelines, and view matched NGOs.
-            </p>
-          </div>
-        </Link>
-
-        <Link
-          to="/donor/requests"
-          className="bg-slate-900/70 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-5 flex items-start gap-4 transition-all group"
-        >
-          <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-800/80 text-amber-400 group-hover:scale-110 transition-transform">
-            <Inbox size={22} />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">
-              Requests & Handovers
-            </h4>
-            <p className="text-xs text-slate-400 mt-1">
-              Review NGO claim requests, accept handovers, and verify 6-digit handover OTPs.
-            </p>
-          </div>
-        </Link>
-      </div>
-
-      {/* Recent Donations Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-white">Recent Donation Listings</h3>
-            <p className="text-xs text-slate-400">Your most recently created community listings</p>
-          </div>
-          <Link
-            to="/donor/donations"
-            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
-          >
-            <span>View All Donations ({metrics.total_donations})</span>
-            <ArrowRight size={14} />
+      {/* Recent donations */}
+      <div className="ss-card" style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <h2 className="ss-section-title">Recent Donations</h2>
+          <Link to="/donor/donations" style={{ fontSize: '.8125rem', fontWeight: 600, color: 'var(--ss-green)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+            View All <ArrowRight size={14} />
           </Link>
         </div>
 
         {recentDonations.length === 0 ? (
-          <EmptyState
-            icon={Package}
-            title="No donations listed yet"
-            description="You have not created any donation listings yet. Share your surplus items with verified local NGOs today!"
-            actionLabel="Create Your First Donation"
-            onAction={() => window.location.assign('/donor/donations/new')}
-          />
+          <div className="ss-empty">
+            <Package size={36} className="ss-empty-icon" />
+            <div className="ss-empty-title">No donations yet</div>
+            <div className="ss-empty-desc">Start by posting your first donation!</div>
+            <Link to="/donor/donations/new" className="ss-btn ss-btn-primary ss-btn-sm" style={{ marginTop: '.5rem' }}>
+              <PlusCircle size={14} /> Post Donation
+            </Link>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {recentDonations.map((item) => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+            {recentDonations.map(item => {
               const mainImageId = item.images?.[0]?.id || (Array.isArray(item.image_ids) ? item.image_ids[0] : null);
               const imageUrl = mainImageId ? `/api/media/donation-images/${mainImageId}` : null;
-              const availableQty = item.available_quantity ?? item.total_quantity ?? 0;
-              const totalQty = item.total_quantity ?? 0;
+              const qty = item.available_quantity ?? item.total_quantity ?? 0;
 
               return (
-                <div
-                  key={item.id}
-                  className="bg-slate-900/80 border border-slate-800 hover:border-slate-700 rounded-2xl overflow-hidden shadow-lg transition-all duration-200 flex flex-col justify-between group"
-                >
-                  <div>
-                    {/* Thumbnail Image Banner */}
-                    <div className="h-44 w-full bg-slate-950 relative overflow-hidden flex items-center justify-center">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center gap-2 text-slate-600">
-                          <Package size={36} />
-                          <span className="text-[11px]">No image attached</span>
-                        </div>
-                      )}
-                      <div className="absolute top-3 right-3">
-                        <StatusBadge status={item.status} size="sm" />
-                      </div>
-                      <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-slate-800 text-[11px] font-semibold text-slate-200 capitalize">
-                        {item.category_name || 'General Item'}
-                      </div>
+                <div key={item.id} className="ss-item-card" style={{ display: 'flex', alignItems: 'center', gap: '.875rem', padding: '.875rem 1rem' }}>
+                  {/* Thumbnail */}
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={item.title} className="ss-item-thumb"
+                      onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  ) : (
+                    <div className="ss-item-thumb-placeholder"><Package size={24} /></div>
+                  )}
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: '.875rem', color: 'var(--ss-text)', marginBottom: '.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.title}
                     </div>
-
-                    {/* Listing Content */}
-                    <div className="p-5 space-y-3">
-                      <h4 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
-                        {item.title}
-                      </h4>
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                        {item.description || 'No description provided.'}
-                      </p>
-
-                      {/* Quantity & Condition metrics */}
-                      <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-semibold">Available</span>
-                          <span className="font-bold text-emerald-400">
-                            {availableQty} / {totalQty} units
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-semibold">Condition</span>
-                          <span className="font-semibold text-slate-200 capitalize">
-                            {(item.condition || 'good').replace('_', ' ')}
-                          </span>
-                        </div>
-                      </div>
+                    <div style={{ fontSize: '.75rem', color: 'var(--ss-muted)' }}>
+                      {qty} items · {item.category_name || 'General'} · <span style={{ textTransform: 'capitalize' }}>{(item.condition || 'good').replace('_', ' ')}</span>
                     </div>
                   </div>
 
-                  {/* Actions Footer */}
-                  <div className="p-5 pt-0 border-t border-slate-800/60 mt-auto flex items-center justify-between gap-2">
+                  {/* Status + action */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', flexShrink: 0 }}>
+                    <StatusBadge status={item.status} size="sm" />
                     <Link
                       to={`/donor/donations/${item.id}`}
-                      className="text-xs font-semibold text-slate-300 hover:text-white py-2"
+                      className="ss-btn ss-btn-secondary ss-btn-sm"
                     >
-                      View Details
-                    </Link>
-                    <Link
-                      to={`/donor/donations/${item.id}/matches`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/80 text-emerald-400 text-xs font-semibold transition-colors"
-                    >
-                      <Sparkles size={13} />
-                      <span>Find Matches</span>
+                      <Eye size={13} /> View Details
                     </Link>
                   </div>
                 </div>
